@@ -1,5 +1,6 @@
 import time
 
+from commons.bank import Bank
 from commons.character import Character
 from commons.locations import Location, Monster
 from dataclass.task import Task
@@ -24,22 +25,42 @@ class Hunter(Role):
     # Conditions
     def heal_condition(self) -> bool:
         return self.character.hp <= (self.character.max_hp * 0.45)
+
+    #def find_monster_condition(self) -> bool:
+    #    if not hunt_monster_condition():
+    #        return False
+
+    #def hunt_monster_condition(self) -> bool:
+    #    if self.character.inventory.is_full():
+    #        return False
+    #    # check inventory for targeted monster
+
     
     def find_chicken_condition(self) -> bool:
         return self.kill_chicken_condition() and self.character.pos != Monster.CHICKEN
     
     def kill_chicken_condition(self) -> bool:
-        raw_chicken = self.character.inventory.get(item='raw_chicken')
+        if self.character.inventory.is_full():
+            return False
+        
+        raw_chicken = self.character.inventory.pick(item='raw_chicken')
         if raw_chicken is not None:
             return raw_chicken.quantity < 10
         return True
     
     def go_to_bank_condition(self) -> bool:
-        return self.character.pos != Location.BANK
+        return (self.withdraw_heal_item_condition() or self.store_resources_condition) and self.character.pos != Location.BANK
     
     def withdraw_heal_item_condition(self) -> bool:
-        if self.character.inventory.get(itemtype='consumable',subtype=['food']):
+        if self.character.inventory.is_full():
+            return False
+
+        if self.character.inventory.pick(itemtype='consumable',effect='heal'):
             return False;
+
+        bank = Bank()
+        if not bank.is_in_bank(itemtype='consumable',effect='heal'):
+            return False
 
         last_attempt = self.cooldowns.get("withdraw_heal_item", 0)
         return time.monotonic() - last_attempt >= COOLDOWN 
@@ -58,16 +79,17 @@ class Hunter(Role):
         await self.character.fight()
 
     async def go_to_bank(self):
-        await self.character.move_to(Location.BANK.x, Location.BANK.y)
+        await self.go_to(Location.BANK)
 
     async def store_resources(self):
-        resources = self.character.inventory.get(itemtype='resource')
+        resources = self.character.inventory.pick(itemtype='resource')
         if resources:
-            for code, resource in resources.items():
-                await self.character.store(code,resource.quantity)
+            bank = Bank()
+            item = next(iter(resources.values()))
+            await bank.deposit(self.character,item,item.quantity)
 
     async def withdraw_heal_item(self):
-        success = await self.character.withdraw('cooked_chicken',10)
-
+        bank = Bank()
+        success = await bank.ask_for_withdraw(self.character, quantity=10, itemtype='consumable',effect='heal')
         if not success:
             self.cooldowns["withdraw_heal_item"] = time.monotonic()
