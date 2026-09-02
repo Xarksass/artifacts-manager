@@ -1,5 +1,4 @@
 import asyncio
-from collections import deque
 from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
@@ -55,7 +54,6 @@ class Character:
     pos: Position
     role: Role
     api: CharacterEndpoint
-    logs: deque[str]
     _next_ready_at: float | None # deadline absolue (loop.time())
     __cooldown: Cooldown
     __window: CharacterWindow
@@ -240,26 +238,14 @@ class Character:
             self.window.log(f'{quantity} {item} created')
         return response
 
-    async def gather(self) -> None:
+    async def gather(self) -> list[dict[str,Any]]:
         self.window.log('Gathering ...')
         response = await self.api.gather()
         if response and 'details' in response:
             for d in response['details']['items']:
                 self.window.log(f'{d['quantity']}x {d['code']} gathered')
-
-    """ Bank actions"""
-    async def store(self, item:str, quantity: int|str) -> None:
-        if quantity == 'all':
-            quantity = self.inventory.items[item].quantity
-
-        assert isinstance(quantity, int)
-        self.window.log(f"Store {quantity} {item} into the bank...")
-        response = await self.api.store(item, quantity)
-        if response:
-            self.inventory.update(item, -(quantity))
-            self.window.log(f"Stored {quantity} {item} into the bank")
-
-    def check_bank_item_type(self, type:str, subtype:str) -> bool: return False
+            return response['details']['items']
+        return []
 
     def __repr__(self) -> str:
         return f'{self.name}({self.role.className}:{self.level}) [❤️ {self.hp}/{self.max_hp}]'

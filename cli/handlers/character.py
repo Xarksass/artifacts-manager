@@ -3,6 +3,7 @@ import sys
 from typing import TYPE_CHECKING
 
 from roles.cook import Cook
+from roles.gatherer import Gatherer
 from roles.hunter import Hunter
 from roles.role import Role
 
@@ -26,6 +27,7 @@ class CharacterHandler:
             Roles: dict[str,type[Role]] = {
                 'Hunter': Hunter,
                 'Cook': Cook,
+                'Gatherer': Gatherer,
             }
             options = list(Roles.keys())
 

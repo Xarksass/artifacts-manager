@@ -47,7 +47,9 @@ class CharacterEndpoint(Endpoint):
             elif 'characters' in dt:
                 ch = dt['characters'][0]
             if ch is not None:
-                if self.character.level != ch['level']: self.character.level = ch['level']
+                if self.character.level != ch['level']:
+                    self.character.window.log(f'Level Up! {self.character.level} -> {ch['level']}')
+                    self.character.level = ch['level']
                 if self.character.hp != ch['hp']: self.character.hp = ch['hp']
                 if self.character.max_hp != ch['max_hp']: self.character.max_hp = ch['max_hp']
 

@@ -98,7 +98,8 @@ class CharacterWindow:
         self.log_window.border()
         for y, log in enumerate(self.__logs):
             self.log_window.addstr(y+1, 1, log)
-        self.log_window.refresh()
+        self.log_window.noutrefresh()
+        curses.doupdate()
         self.refresh_status()
 
     def refresh_status(self):
