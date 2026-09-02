@@ -28,7 +28,7 @@ class Items(ABC):
                         craft['quantity']
                     ))
 
-                for key,recipe_list in crafts.items():
+                for key, recipe_list in crafts.items():
                     crafts[key] = sorted(recipe_list, key=lambda x: (x.level *-1))
                 
                 parsed_items[item_data['code']] = Item(
@@ -48,22 +48,44 @@ class Items(ABC):
     
     @overload
     @staticmethod
-    def get(items:dict[str,Item], *, item: str, itemtype: None = None, subtype: None = None, effect: None = None, skill: None = None) -> Item | None: ...
+    def get(items:dict[str,Item], *, item: str, itemtype: None = None, subtype: None = None, effect: None = None, skill: None = None, exclusion_mode: bool = False) -> Item | None: ...
     @overload
     @staticmethod
-    def get(items:dict[str,Item], *, item: None = None, itemtype: str | None = None, subtype: list[str] | None = None, effect: str | None = None, skill: str | None = None) -> dict[str, Item] | None: ...
+    def get(items:dict[str,Item], *, item: None = None, itemtype: str | None = None, subtype: list[str] | None = None, effect: str | None = None, skill: str | None = None, exclusion_mode: bool = False) -> dict[str, Item] | None: ...
     @staticmethod
-    def get(items:dict[str,Item], *, item: str | None = None, itemtype: str | None = None, subtype: list[str] | None = None, effect: str | None = None, skill: str | None = None) -> dict[str, Item] | Item | None:
-        if item:
-            return items.get(item, None)
-        elif itemtype or subtype or effect or skill:
-            parsed_items: dict[str,Item] = {}
-            for code, data in items.items():
-                if itemtype and data.type != itemtype: continue
-                if subtype and not data.subtype in subtype: continue
-                if effect and not effect in data.effects: continue
-                if skill and not skill in data.crafts: continue
-                if data.quantity: parsed_items[code] = data
-            return parsed_items
+    def get(items:dict[str,Item], *, 
+            item: str | None = None, 
+            itemtype: str | None = None, 
+            subtype: list[str] | None = None, 
+            effect: str | None = None, 
+            skill: str | None = None,
+            exclusion_mode: bool = False) -> dict[str, Item] | Item | None:
+        if exclusion_mode:
+            if item:
+                return {item.code:item for item in items.values() if item.quantity > 0 and item.code != item}
+            elif itemtype or subtype or effect or skill:
+                parsed_items: dict[str,Item] = {}
+                for code, data in items.items():
+                    if itemtype and data.type == itemtype: continue
+                    if subtype and data.subtype in subtype: continue
+                    if effect and effect in data.effects: continue
+                    if skill and skill in data.crafts: continue
+                    if data.quantity: parsed_items[code] = data
+                return parsed_items
+            else:
+                return None
         else:
-            return {item.code:item for item in items.values() if item.quantity > 0}
+            if item:
+                search = items.get(item, None)
+                return None if search is None or search.quantity == 0 else search
+            elif itemtype or subtype or effect or skill:
+                parsed_items: dict[str,Item] = {}
+                for code, data in items.items():
+                    if itemtype and data.type != itemtype: continue
+                    if subtype and not (data.subtype in subtype): continue
+                    if effect and not (effect in data.effects): continue
+                    if skill and not (skill in data.crafts): continue
+                    if data.quantity: parsed_items[code] = data
+                return parsed_items
+            else:
+                return {item.code:item for item in items.values() if item.quantity > 0}

@@ -46,7 +46,7 @@ class Bank(Items):
                     if response:
                         character.inventory.update(item.code, (quantity * -1))
                         character.window.log(f"Stored {quantity} {item.name} into the bank")
-                        if response and not success: success = True
+                        if not success: success = True
                 
                 return success
             else:
@@ -66,19 +66,19 @@ class Bank(Items):
 
                     if item is not None:
                         matched_item = super().get(cls.items, item=item)
-
                         assert matched_item is not None
-                        withdraw_quantity = min(quantity, matched_item.quantity) if quantity > 0 else matched_item.quantity
-                        response = await cls.withdraw(character, matched_item, withdraw_quantity)
-                        if response and not success: success = True
                     else:
                         matching_items = super().get(cls.items, itemtype=itemtype, subtype=subtype, effect=effect, skill=skill)
-
                         assert matching_items is not None
-                        for matched_item in matching_items.values():
-                            withdraw_quantity = min(quantity, matched_item.quantity) if quantity > 0 else matched_item.quantity
-                            response = await cls.withdraw(character, matched_item, withdraw_quantity)
-                            if response and not success: success = True
+                        matched_item = next(iter(matching_items.values()))
+
+                    if quantity > 0:
+                        asked_quantity = min(quantity, matched_item.quantity)
+                    else:
+                        asked_quantity = matched_item.quantity
+                    withdraw_quantity = min(asked_quantity, character.inventory.max_items - character.inventory.total)
+                    response = await cls.withdraw(character, matched_item, withdraw_quantity)
+                    if response and not success: success = True
                 return success
             else:
                 await asyncio.sleep(0.25)

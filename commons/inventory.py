@@ -22,14 +22,14 @@ class Inventory(Items):
         self.api = ItemsEndpoint()
 
     @overload
-    def pick(self, *, item:str, itemtype:None = None, subtype:None = None, effect:None = None, skill:None = None) -> Item | None:...
+    def pick(self, *, item:str, itemtype:None = None, subtype:None = None, effect:None = None, skill:None = None, exclusion_mode: bool = False) -> Item | None:...
     @overload
-    def pick(self, *, item:None = None, itemtype:str|None = None, subtype:list[str]|None = None, effect:str|None = None, skill:str|None = None) -> dict[str, Item]:...
-    def pick(self, *, item: str | None = None, itemtype: str | None = None, subtype: list[str] | None = None, effect: str | None = None, skill: str | None = None) -> dict[str, Item] | Item | None:
+    def pick(self, *, item:None = None, itemtype:str|None = None, subtype:list[str]|None = None, effect:str|None = None, skill:str|None = None, exclusion_mode: bool = False) -> dict[str, Item]:...
+    def pick(self, *, item: str | None = None, itemtype: str | None = None, subtype: list[str] | None = None, effect: str | None = None, skill: str | None = None, exclusion_mode: bool = False) -> dict[str, Item] | Item | None:
         if item is not None:
-            return super().get(self.items, item=item)
+            return super().get(self.items, item=item, exclusion_mode=exclusion_mode)
         else:
-            return super().get(self.items, itemtype=itemtype, subtype=subtype, effect=effect, skill=skill)
+            return super().get(self.items, itemtype=itemtype, subtype=subtype, effect=effect, skill=skill, exclusion_mode=exclusion_mode)
 
     def is_full(self) -> bool:
         return self.total >= self.max_items
@@ -57,5 +57,5 @@ class Inventory(Items):
                 )
                 self.total += quantity
         else:
-            self.total += quantity - stored.quantity
+            self.total += quantity
             stored.quantity += quantity
