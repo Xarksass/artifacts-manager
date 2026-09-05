@@ -4,7 +4,6 @@ from typing import TYPE_CHECKING
 from dataclass.task import Task
 from dto.bank import BankOut
 from dto.character import CharacterOut
-from fastapi_cache import FastAPICache
 from models.bank import Bank
 
 from core.logger import get_logger
@@ -31,9 +30,10 @@ class Selector:
                 cu, _, bu = await task.action()
 
                 if cu:
-                    await FastAPICache.clear(namespace='CHARACTER')
+                    logger.debug('Character updated, send data to client')
                     await manager.broadcast({
                         "type": "character_update",
+                        "name": self.character.name,
                         "data": CharacterOut.from_character(self.character).model_dump(),
                     })
 
@@ -41,11 +41,12 @@ class Selector:
                 #    await FastAPICache.clear(namespace='INVENTORY')
                 #    await manager.broadcast({
                 #        "type": "inventory_update",
+                #        "name": self.character.name,
                 #        "data": InventoryOut.from_inventory(self.character.inventory).model_dump()
                 #    })
 
                 if bu:
-                    await FastAPICache.clear(namespace='BANK')
+                    logger.debug('Bank updated, send data to client')
                     await manager.broadcast({
                         "type": "bank_update",
                         "data": BankOut.from_bank(self.bank)

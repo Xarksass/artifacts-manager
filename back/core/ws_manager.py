@@ -38,6 +38,7 @@ class ConnectionManager:
                 await ws.send_json(message)
             except Exception:
                 dead.append(ws)  # client déconnecté sans passage propre par disconnect()
+                logger.info("client déconnecté sans passage propre par disconnect()")
 
         if dead:
             async with self._lock:

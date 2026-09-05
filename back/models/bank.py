@@ -25,13 +25,11 @@ class Bank(Items):
             cls.api = BankEndpoint()
             cls.access_loc = asyncio.Lock()
             cls.items = {}
-
             logger.info('Bank Syncronisation ...')
             stored_items = await cls.api.get_items()
             if stored_items:
                 cls.items = await super().parse_items(ItemsEndpoint(), stored_items)
-        
-        logger.info('Bank initialized ...')
+            logger.info('Bank initialized ...')
         return cls.instance
 
     # TODO: Check if the bank is full (no slot available), if it happens, chekc gold and try to by expansion
