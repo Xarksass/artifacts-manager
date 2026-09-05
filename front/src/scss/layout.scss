@@ -1,0 +1,46 @@
+// 
+// Common rules for all pages
+//
+html {
+	overflow-x: hidden;
+	min-height: 100%;
+}
+
+//
+// Remove default margin.
+//
+body {
+	margin: 0;
+	width: 100%;
+	max-width: 100vw;
+	height: 100%;
+	min-height: 100vh;
+	position: relative;
+}
+
+#layout {
+	&::before {
+		content: "";
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		background-image: url("/tile.webp");
+		background-repeat: repeat;
+	}
+}
+
+#root {
+	position: absolute;
+	width: 100%;
+	height: 100%;
+	backdrop-filter: blur(5px);
+	padding: 2rem;
+}
+
+.panel {
+	border-radius: 5px;
+	//background-color: color-mix(in oklab, #0c1513 90%, transparent);
+	background-color: #0c1513f1;
+	padding: 1rem;
+	color: #fff;
+}
