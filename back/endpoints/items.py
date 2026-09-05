@@ -5,6 +5,8 @@ from endpoints.endpoint import Endpoint
 
 class ItemsEndpoint(Endpoint):
     endpoint = 'items'
+    _cache_namespace = 'items'
+    _cache_expire = 6000
 
     async def get(self, code:str) -> dict[str,Any]:
         return await self.fetch(code)
@@ -17,6 +19,7 @@ class ItemsEndpoint(Endpoint):
 
 class BankEndpoint(Endpoint):
     endpoint = 'my/bank'
+    _cache_namespace = 'bank'
 
     async def get_items(self) -> list[dict[str,Any]]:
         return await self.fetchAll('items')

@@ -3,6 +3,7 @@ from enum import Enum, auto
 from typing import Any
 
 from core.logger import get_logger
+from core.ws_manager import manager
 from dataclass.character import SKILLS
 from models.character import Character
 from models.cooldown import Cooldown
@@ -18,6 +19,8 @@ class Role(Enum):
 class CharactersEndpoint(Endpoint):
     def __init__(self) -> None:
         self.endpoint = 'my/characters'
+        self._cache_namespace = 'character'
+        self._cache_expire = 60
         super().__init__()
 
     async def get_characters(self) -> dict[str,Character]:
@@ -49,6 +52,11 @@ class CharactersEndpoint(Endpoint):
                         remaining.seconds,
                         data['cooldown_expiration'],
                     )
+                    await manager.broadcast({
+                        'type': 'cooldown_update',
+                        'name': ch.name,
+                        'cd': remaining.seconds
+                    })
                 characters[ch.name] = ch
                 logger.info('Character Initialized ...')
 

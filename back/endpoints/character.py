@@ -3,7 +3,9 @@ from datetime import UTC, datetime
 from typing import TYPE_CHECKING, Any
 
 from core.logger import get_logger
+from core.ws_manager import manager
 from dataclass.character import SKILLS
+from fastapi_cache import FastAPICache
 
 from endpoints.endpoint import Endpoint
 
@@ -19,6 +21,8 @@ class CharacterEndpoint(Endpoint):
         self.character = character
         self.name = character.name
         self.endpoint = f'my/{self.name}/'
+        self._cache_namespace = f'character_{self.name}'
+        self._cache_expire = 60
         super().__init__()
 
     async def action(self, action:str, data: dict[str,Any]|list[dict[str,Any]]|None = None) -> dict[str,Any]:
@@ -27,9 +31,15 @@ class CharacterEndpoint(Endpoint):
         logger.debug('check cooldown')
         if self.cooldown is not None and self.cooldown.expiration > datetime.now(UTC):
             self.character.cooldown = self.cooldown
+            await manager.broadcast({
+                'type': 'cooldown_update',
+                'name': self.name,
+                'cd': self.cooldown.remaining
+            })
 
         logger.debug('parse data')
         if 'data' in response:
+            await FastAPICache.clear(namespace=self._cache_namespace)
             dt = response['data']
             ch = None
             if 'character' in dt:
@@ -38,8 +48,10 @@ class CharacterEndpoint(Endpoint):
                 ch = dt['characters'][0]
             if ch is not None:
                 if self.character.level != ch['level']:
-                    #self.character.window.log(f'Level Up! {self.character.level} -> {ch['level']}')
+                    await self.character.log(f'Level Up! {self.character.level} -> {ch['level']}')
                     self.character.level = ch['level']
+                    self.character.max_hp = ch['max_xp']
+                if self.character.hp != ch['xp']: self.character.hp = ch['xp']
                 if self.character.hp != ch['hp']: self.character.hp = ch['hp']
                 if self.character.max_hp != ch['max_hp']: self.character.max_hp = ch['max_hp']
                 if self.character.inventory.max_items != ch['inventory_max_items']: self.character.inventory.max_items = ch['inventory_max_items']

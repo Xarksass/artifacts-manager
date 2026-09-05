@@ -3,6 +3,8 @@ from endpoints.endpoint import Endpoint
 
 class MonstersEndpoint(Endpoint):
     endpoint = 'monsters'
+    _cache_namespace = 'monsters'
+    _cache_expire = 6000
 
     def get_monster_details(self, monster:str):
         path = f'/{monster}'

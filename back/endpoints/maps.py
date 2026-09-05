@@ -3,6 +3,8 @@ from endpoints.endpoint import Endpoint
 
 class MapsEndpoint(Endpoint):
     endpoint = 'maps'
+    _cache_namespace = 'maps'
+    _cache_expire = 6000
 
     def __init__(self, layer:str = 'overworld') -> None:
         super().__init__()
