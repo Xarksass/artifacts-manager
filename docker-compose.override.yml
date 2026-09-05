@@ -1,0 +1,42 @@
+services:
+  back:
+    build:
+      context: ./back
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    volumes:
+      - ./back:/server
+      - /server/.venv
+    working_dir: /server
+    ports:
+      - "8000:8000"
+    depends_on:
+      cache:
+        condition: service_healthy
+    environment:
+      DEV: 'True'
+      UVICORN_HOST: '0.0.0.0'
+      CACHE_HOST: 'cache'
+    env_file:
+      - .env
+    command: sleep infinity
+  
+  front:
+    build:
+      context: ./front
+      dockerfile: Dockerfile.dev
+    restart: unless-stopped
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+    working_dir: /app
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: 'http://localhost:8000'
+      VITE_WS_URL: 'http://localhost:8000/ws/'
+    command: npm run dev -- --host
+
+  cache:
+    ports:
+      - "6379:6379"
