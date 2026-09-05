@@ -1,0 +1,24 @@
+FROM python:3.14-slim
+
+# Keeps Python from generating .pyc files in the container 
+ENV PYTHONDONTWRITEBYTECODE=1 
+ 
+# Turns off buffering for easier container logging 
+ENV PYTHONUNBUFFERED=1 
+
+WORKDIR /server
+
+# Récupère le binaire uv depuis l'image officielle
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
+ 
+# Copie les fichiers de dépendances et installe (sans le code source pour profiter du cache layer Docker)
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen
+
+ENV PATH="/server/.venv/bin:$PATH"
+
+#create a non root user to access the container 
+RUN adduser -u 5678 --disabled-password --gecos "" vscode
+
+EXPOSE 8000
+CMD ["sleep", "infinity"]
