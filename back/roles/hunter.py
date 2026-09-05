@@ -39,7 +39,7 @@ class Hunter(Role):
     def find_chicken_condition(self) -> bool:
         logger.debug('--- find_chicken_condition ---')
         logger.debug(f'self.kill_chicken_condition() = {self.kill_chicken_condition()}')
-        logger.debug(f'self.character.pos != Monster.CHICKEN = {self.character.pos != Monster.CHICKEN}')
+        logger.debug(f'self.character.pos({self.character.pos}) != Monster.CHICKEN({Monster.CHICKEN}) = {self.character.pos != Monster.CHICKEN}')
         return self.kill_chicken_condition() and self.character.pos != Monster.CHICKEN
     
     def kill_chicken_condition(self) -> bool:
@@ -51,7 +51,7 @@ class Hunter(Role):
         logger.debug(f"self.character.inventory.pick(item='raw_chicken') = {bool(self.character.inventory.pick(item='raw_chicken'))}")
         raw_chicken = self.character.inventory.pick(item='raw_chicken')
         if raw_chicken is not None:
-            return raw_chicken.quantity < 10
+            return raw_chicken.quantity < 20
         return True
     
     def go_to_bank_condition(self) -> bool:
@@ -81,7 +81,8 @@ class Hunter(Role):
         logger.debug('--- store_resources_condition ---')
         logger.debug(f"self.character.inventory.is_full() = {self.character.inventory.is_full()}")
         logger.debug(f"bool(self.character.inventory.pick(itemtype='resource')) = {bool(self.character.inventory.pick(itemtype='resource'))}")
-        return self.character.inventory.is_full() and bool(self.character.inventory.pick(itemtype='resource'))
+        #return self.character.inventory.is_full() and bool(self.character.inventory.pick(itemtype='resource'))
+        return self.character.inventory.is_full() or len(self.character.inventory.pick(itemtype='resource')) > 20
 
     # Actions
     async def heal(self) -> tuple[bool,bool,bool]:
