@@ -5,6 +5,7 @@
 }
 .character {
     --cd: 0%;
+    --duration: 0s;
     flex: 1 0 calc(20% - .8rem);
     max-width: calc(20% - .8rem);
     display: flex;
@@ -13,7 +14,8 @@
     padding: 0;
 
     .cooldown {
-        width: var(--cd);
+        width: var(--cd, 0%);
+        transition: width var(--cd-duration, 0s) linear;
         height: 2px;
         background-color: blue;
     }

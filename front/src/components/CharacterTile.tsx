@@ -1,27 +1,21 @@
-import { useEffect, useState } from "react";
+import { useCallback, useState } from "react";
+import { CooldownBar } from "./CooldownBar"
 import type { Character } from "../types/character";
+import { useWebSocketMessage } from "../contexts/WebSocketContext";
 import * as Constants from '../constants'
 
 export function CharacterTile(props: { data: Character }) {
     //const [character, setCharacter] = useState(data)
     const [character, setCharacter] = useState(props.data)
+    const [logs, setLogs] = useState<string[]>([])
 
-    // Mises à jour en continu via WebSocket
-    useEffect(() => {
-        const ws = new WebSocket(Constants.WS_URL);
+    const handleMessage = useCallback((message: any) => {
+        if (message.name !== character.name) return;
+        if (message.type === "character_update") setCharacter(message.data);
+        if (message.type === "log_update") setLogs(message.data);
+    }, [character.name]);
 
-        ws.onmessage = (event) => {
-            const message = JSON.parse(event.data);
-            if (message.type == "character_update" && message.data.name == character.name) {
-                setCharacter(message.data)
-            }
-        };
-
-        ws.onerror = (err) => console.error("WebSocket error", err);
-
-        return () => ws.close();
-    }, []);
-
+    useWebSocketMessage(handleMessage);
 
     function skin_src(code: string) {
         return `https://artifactsmmo.com/images/characters/${code}.png`
@@ -39,7 +33,7 @@ export function CharacterTile(props: { data: Character }) {
 
     return <>
     <div className="character panel" key={character.name}>
-        <div className="cooldown"></div>
+        <CooldownBar name={character.name} />
         <div className="repr">
             <div className="desc">
                 <div className="name">{character.name} <small>({character.x},{character.y})</small></div>
@@ -54,7 +48,13 @@ export function CharacterTile(props: { data: Character }) {
             </div>
         </div>
         <button onClick={() => startRoutine(character.name)}>Start routine</button>
-        {/* <div className="logs"></div> */}
+        <div className="logs">
+            <ul>
+                {logs.map((log, i) => (
+                    <li key={`log_${i}`}>{log}</li>
+                ))}
+            </ul>
+        </div>
     </div>
     </>
 }
