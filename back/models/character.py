@@ -1,13 +1,17 @@
 import asyncio
+from collections import deque
 from collections.abc import Callable
 from typing import Any, Self
 
-#from cli.window.character import CharacterWindow
+from core.ws_manager import manager
 from dataclass.character import Skills
 from dataclass.item import Item, Recipe
 from endpoints.character import CharacterEndpoint
 from endpoints.endpoint import Cooldown
 from endpoints.maps import MapsEndpoint
+
+#from cli.window.character import CharacterWindow
+from endpoints.monsters import MonstersEndpoint
 
 #from endpoints.monsters import MonstersEndpoint
 from roles.role import Role
@@ -33,6 +37,7 @@ class Character:
     api: CharacterEndpoint
     _next_ready_at: float | None # deadline absolue (loop.time())
     __cooldown: Cooldown
+    __logs: deque[str]
     #__window: CharacterWindow
 
     @classmethod
@@ -46,6 +51,7 @@ class Character:
         self.api = CharacterEndpoint(self)
         self.role = Role(self)
         self._next_ready_at = None
+        self.__logs = deque([])
         return self
 
     """ @property
@@ -66,6 +72,15 @@ class Character:
         self._next_ready_at = asyncio.get_running_loop().time() + cd.remaining
         #if cd.remaining:
         #    asyncio.create_task(self.window.run_cooldown(asyncio.Event()))
+
+    # Methods
+    async def log(self, entry: str) -> None:
+        self.__logs.append(entry)
+        await manager.broadcast({
+            'type': 'log_update',
+            'name': self.name,
+            'logs': self.__logs
+        })
 
     def next_ready_at(self) -> float | None:
         """Renvoie la deadline absolue du prochain tick possible, ou None si prêt maintenant."""
@@ -113,6 +128,7 @@ class Character:
         assert count is not None
         return count
 
+    # ACtions
     async def move(self, mx:int, my:int) -> None:
         await self.move_to(self.pos.x + mx,self.pos.y + my)
 
@@ -131,10 +147,10 @@ class Character:
                 to_iter = to_details['interactions']['content']
                 to_name += f' - {to_iter['code'].replace('_','').capitalize()}({to_iter['type'].replace('_','').capitalize()})'
 
-        #self.window.log(f'⏳ Moving from {from_name} to {to_name}...')
+        await self.log(f'⏳ Moving from {from_name} to {to_name}...')
         response = await self.api.move(x,y)
         if response:
-            #self.window.log(f'👢 Moved from {from_name} to {to_name} on {response["destination"]['name']}.')
+            await self.log(f'👢 Moved from {from_name} to {to_name} on {response["destination"]['name']}.')
             self.pos = Position(x,y)
 
     async def fight(self) -> None:
@@ -143,25 +159,25 @@ class Character:
         if 'interactions' in map_details:
             iter_type = map_details['interactions']['content']
             if iter_type['type'] == 'monster':
-                #monster_api = MonstersEndpoint()
-                #monster = await monster_api.get_monster_details(iter_type['code'])
+                monster_api = MonstersEndpoint()
+                monster = await monster_api.get_monster_details(iter_type['code'])
             
-                #self.window.log(f'⚔️ Attacking {monster['name']}...')
+                await self.log(f'⚔️ Attacking {monster['name']}...')
                 response = await self.api.fight()
 
                 if response:
                     fight = response["fight"]
                     fight_stats = fight["characters"][0]
                     
-                    #self.window.log("🏆 Fight won!" if fight["result"] == "win" else "💀 Fight lost!")
-                    #self.window.log(f"⚔️  XP gained: {fight_stats['xp']} | HP remaining: {fight_stats['final_hp']}")
+                    await self.log("🏆 Fight won!" if fight["result"] == "win" else "💀 Fight lost!")
+                    await self.log(f"⚔️  XP gained: {fight_stats['xp']} | HP remaining: {fight_stats['final_hp']}")
                     
                     if len(fight_stats["drops"]) > 0:
                         for d in fight_stats['drops']:
                             drop = await self.inventory.update(d['code'], d['quantity'])
                             d['name'] = drop.name if isinstance(drop, Item) else d['code']
-                        #drops_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in fight_stats["drops"]])
-                        #self.window.log(f"🎁 Loot dropped: {drops_str}")
+                        drops_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in fight_stats["drops"]])
+                        await self.log(f"🎁 Loot dropped: {drops_str}")
 
     async def rest(self) -> int:
         #self.window.log('🛌 Resting...')
