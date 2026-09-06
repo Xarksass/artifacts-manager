@@ -4,7 +4,7 @@ from starlette.middleware.base import BaseHTTPMiddleware, RequestResponseEndpoin
 from starlette.status import HTTP_429_TOO_MANY_REQUESTS
 
 WINDOW_SECONDS = 60
-MAX_REQUESTS = 10
+MAX_REQUESTS = 100
 
 class DDOSMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
