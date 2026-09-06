@@ -184,7 +184,7 @@ class Character:
                         await self.log(f"🎁 Loot dropped: {drops_str}")
 
     async def rest(self) -> int:
-        #self.window.log('🛌 Resting...')
+        await self.log('🛌 Resting...')
         response = await self.api.rest()
         return response["hp_restored"]
     
@@ -196,9 +196,9 @@ class Character:
             hp_restored = self.max_hp - self.hp - diff
             
             if to_eat is not None:
-                #self.window.log(f'⏳ Eating a portion of {to_eat.name}...')
+                await self.log(f'⏳ Eating a portion of {to_eat.name}...')
                 await self.api.use(to_eat.code)
-                #self.window.log(f'🍴 1 portion of {to_eat.name} eaten.')
+                await self.log(f'🍴 1 portion of {to_eat.name} eaten.')
                 return hp_restored
         return 0
 
@@ -210,9 +210,9 @@ class Character:
             hp_restored = self.max_hp - self.hp - diff
             
             if to_drink is not None:
-                #self.window.log(f'⏳ Drinking {to_drink.name}...')
+                await self.log(f'⏳ Drinking {to_drink.name}...')
                 await self.api.use(to_drink.code)
-                #self.window.log(f'🍵 1 {to_drink.name} drank.')
+                await self.log(f'🍵 1 {to_drink.name} drank.')
                 return hp_restored
         return 0
 
@@ -228,28 +228,28 @@ class Character:
         if not hp_restored:
             hp_restored = await self.rest()
 
-        #self.window.log(f"Restored {hp_restored} HP.")
-        #self.window.log(f"❤️ Current HP: {self.hp}/{self.max_hp}")
+        await self.log(f"Restored {hp_restored} HP.")
+        await self.log(f"❤️ Current HP: {self.hp}/{self.max_hp}")
 
     async def craft(self, recipe:Recipe, quantity:int = 1) -> dict[str,Any]:
-        #self.window.log(f'⏳ Crafting {quantity} {recipe.name} ...')
+        await self.log(f'⏳ Crafting {quantity} {recipe.name} ...')
         response = await self.api.craft(recipe.code, quantity)
         if response:
             await self.inventory.update(recipe.code, quantity)
             for code, q_needed in recipe.items.items():
                 await self.inventory.update(code, (q_needed * quantity * -1))
-            #self.window.log(f'⚒️ {quantity} {recipe.name} created')
+            await self.log(f'⚒️ {quantity} {recipe.name} created')
         return response
 
     async def gather(self) -> list[dict[str,Any]]:
-        #self.window.log('⏳ Gathering ...')
+        await self.log('⏳ Gathering ...')
         response = await self.api.gather()
         if response and 'details' in response:
             for d in response['details']['items']:
                 drop = await self.inventory.update(d['code'], d['quantity'])
                 d['name'] = drop.name if isinstance(drop, Item) else d['code']
-            #drops_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in response['details']['items']])
-            #self.window.log(f"⛏️  Resource(s) gathered: {drops_str}")
+            drops_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in response['details']['items']])
+            await self.log(f"⛏️  Resource(s) gathered: {drops_str}")
             return response['details']['items']
         return []
 

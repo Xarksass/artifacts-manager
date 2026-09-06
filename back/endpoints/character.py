@@ -55,23 +55,29 @@ class CharacterEndpoint(Endpoint):
                     await self.character.log(f'Level Up! {self.character.level} -> {ch['level']}')
                     self.character.level = ch['level']
                     self.character.max_xp = ch['max_xp']
+
                 if self.character.xp != ch['xp']:
                     cu = True
                     self.character.xp = ch['xp']
+
                 if self.character.hp != ch['hp']:
                     cu = True
                     self.character.hp = ch['hp']
+
                 if self.character.max_hp != ch['max_hp']:
                     cu = True
                     self.character.max_hp = ch['max_hp']
+
                 if self.character.inventory.max_items != ch['inventory_max_items']:
                     self.character.inventory.max_items = ch['inventory_max_items']
 
                 if cu:
+                    logger.debug('trying to broadcast from endpoint')
+                    logger.debug(CharacterOut.from_character(self.character).model_dump())
                     await manager.broadcast({
                         "type": "character_update",
                         "name": self.character.name,
-                        "data": CharacterOut.from_character(self.character).model_dump(),
+                        "data": CharacterOut.from_character(self.character).model_dump(mode="json"),
                     })
 
                 for k, skill in SKILLS.items():
