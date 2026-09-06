@@ -1,6 +1,8 @@
 import asyncio
 from typing import TYPE_CHECKING, Any, Self
 
+from fastapi_cache import FastAPICache
+
 from core.logger import get_logger
 from dataclass.item import Item
 from endpoints.items import BankEndpoint, ItemsEndpoint
@@ -61,6 +63,7 @@ class Bank(Items):
                             #character.window.log(f"🏦 {stored_items_str} stored into the bank")
                             if not success: success = True
                 
+                await FastAPICache.clear(namespace='BANK')
                 return success
             else:
                 await asyncio.sleep(0.25)
@@ -105,6 +108,8 @@ class Bank(Items):
                         if len(asked_items):
                             response = await cls.withdraw(character, items=asked_items)
                             if response and not success: success = True
+                            
+                await FastAPICache.clear(namespace='BANK')
                 return success
             """ else:
                 await asyncio.sleep(0.25) """

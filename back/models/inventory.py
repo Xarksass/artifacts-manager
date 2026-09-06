@@ -1,5 +1,7 @@
 from typing import Any, Self, overload
 
+from fastapi_cache import FastAPICache
+
 from core.logger import get_logger
 from dataclass.item import Item
 from endpoints.items import ItemsEndpoint
@@ -68,5 +70,7 @@ class Inventory(Items):
         else:
             self.total += quantity
             stored.quantity += quantity
+
+        await FastAPICache.clear(namespace='INVENTORY')
         return stored
         
