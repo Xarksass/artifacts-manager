@@ -115,10 +115,10 @@ class Cook(Role):
         return not self.character.inventory.is_full()
     
     # Actions
-    async def go_to_cooking(self) -> tuple[bool,bool,bool]:
+    async def go_to_cooking(self) -> tuple[bool,bool]:
         return await self.go_to(Workshop.COOKING)
 
-    async def cooking(self) -> tuple[bool,bool,bool]:
+    async def cooking(self) -> tuple[bool,bool]:
         logger.debug('cooking...')
         raw_food: dict[str,Item]|None = self.character.inventory.pick(itemtype='resource', skills=['cooking'])
         crafted = 0
@@ -132,16 +132,16 @@ class Cook(Role):
                         crafted = craftable
                         break
                 if crafted: break
-            return False, True, False
+            return True, False
         if crafted == 0:
             self.cooldowns["cooking"] = time.monotonic()
-        return False, False, False
+        return False, False
 
-    async def withdraw_raw_food(self) -> tuple[bool,bool,bool]:
+    async def withdraw_raw_food(self) -> tuple[bool,bool]:
         await self.bank.ask_for_withdraw(self.character, quantity=10, itemtype='resource', skills=['cooking'])
-        return False, True, True
+        return True, True
 
-    async def store_cooked_food(self) -> tuple[bool,bool,bool]:
+    async def store_cooked_food(self) -> tuple[bool,bool]:
         cooked_food: dict[str,Item]|None = self.character.inventory.pick(itemtype='consumable',subtypes=['food'])
         if cooked_food:
             to_store: list[dict[str,str|int]] = []
@@ -149,10 +149,10 @@ class Cook(Role):
                 to_store.append({'code': food.code, 'quantity': food.quantity})
 
             await self.bank.deposit(self.character, items=to_store)
-            return False, True, True
-        return False, False, False
+            return True, True
+        return False, False
 
-    async def store_resources(self) -> tuple[bool,bool,bool]:
+    async def store_resources(self) -> tuple[bool,bool]:
         resources: dict[str,Item]|None = self.character.inventory.pick(itemtype='resource', skills=['cooking'], exclusion_mode=True)
         if resources:
             to_store: list[dict[str,str|int]] = []
@@ -160,13 +160,13 @@ class Cook(Role):
                 to_store.append({'code': resource.code, 'quantity': resource.quantity})
 
             await self.bank.deposit(self.character, items=to_store)
-            return False, True, True
-        return False, False, False
+            return True, True
+        return False, False
 
-    async def go_fishing(self) -> tuple[bool,bool,bool]:
+    async def go_fishing(self) -> tuple[bool,bool]:
         return await self.go_to(self.current[1]['location']) # type: ignore
 
-    async def fishing(self) -> tuple[bool,bool,bool]:
+    async def fishing(self) -> tuple[bool,bool]:
         response = await self.character.gather()
         if len(response):
             for drop in response:
@@ -175,5 +175,5 @@ class Cook(Role):
                     if self.current[1]['gathered'] >= self.current[1]['threshold']: # type: ignore
                         self.current[1]['gathered'] = 0
                         self.current = self.get_next_valid_fish()
-            return False, True, False
-        return False, False, False
+            return True, False
+        return False, False

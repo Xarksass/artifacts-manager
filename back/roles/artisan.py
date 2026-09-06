@@ -73,6 +73,6 @@ class Artisan(Role):
 
     # Actions
 
-    async def withdraw_raw_food(self) -> tuple[bool,bool,bool]:
+    async def withdraw_raw_food(self) -> tuple[bool,bool]:
         success = await self.bank.ask_for_withdraw(self.character, quantity=10, itemtype='resource',skills=[self.current[0]])
-        return False, success, success
+        return success, success

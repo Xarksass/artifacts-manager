@@ -60,10 +60,10 @@ class Gatherer(Role):
         return bool(self.character.inventory.pick(itemtype='resource'))
 
     # Action
-    async def go_to_resource(self) -> tuple[bool,bool,bool]:
+    async def go_to_resource(self) -> tuple[bool,bool]:
         return await self.go_to(self.current[1]['location'])
 
-    async def gather_resource(self) -> tuple[bool,bool,bool]:
+    async def gather_resource(self) -> tuple[bool,bool]:
         response = await self.character.gather()
         if response:
             for drop in response:
@@ -76,10 +76,10 @@ class Gatherer(Role):
                         except StopIteration:
                             self.resources_iterable = iter(self.resources.items())
                             self.current = next(self.resources_iterable)
-            return False, True, False
-        return False, False, False
+            return True, False
+        return False, False
 
-    async def store_resources(self) -> tuple[bool,bool,bool]:
+    async def store_resources(self) -> tuple[bool,bool]:
         if self.character.pos != Location.BANK:
             await self.go_to(Location.BANK)
         
@@ -90,5 +90,5 @@ class Gatherer(Role):
                 to_store.append({'code': resource.code, 'quantity': resource.quantity})
 
             await self.bank.deposit(self.character, items=to_store)
-            return False, True, True
-        return False, False, False
+            return True, True
+        return False, False

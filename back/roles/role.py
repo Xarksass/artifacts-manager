@@ -32,16 +32,16 @@ class Role:
             self.selector = Selector(self.character, self.tasks, self.__stop)
 
     # Actions
-    async def go_to_bank(self) -> tuple[bool,bool,bool]:
+    async def go_to_bank(self) -> tuple[bool,bool]:
         return await self.go_to(Location.BANK)
 
     # Class Methods
     def set_task_cooldown(self, task:str):
         self.cooldowns[task] = time.monotonic()
 
-    async def go_to(self, location: Position) -> tuple[bool,bool,bool]:
+    async def go_to(self, location: Position) -> tuple[bool,bool]:
         await self.character.move_to(location.x, location.y)
-        return True, False, False
+        return False, False
 
     async def stop_routine(self) -> None:
         logger.info(f'Stop routine called for {self.character.name}')
@@ -66,9 +66,7 @@ class Role:
                         pass  # cooldown écoulé naturellement, on continue
             
             if stop_event.is_set():
-                #self.character.window.refresh_cooldown(0,0)
                 break
 
             if not await self.selector.tick():
-                #self.character.window.refresh_cooldown(0,0)
-                break  # plus rien à exécuter
+                break

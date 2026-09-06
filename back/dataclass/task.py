@@ -6,4 +6,4 @@ from dataclasses import dataclass
 class Task:
     name: str
     condition: Callable[[], bool]
-    action: Callable[[], Awaitable[tuple[bool,bool,bool]]]
+    action: Callable[[], Awaitable[tuple[bool,bool]]]
