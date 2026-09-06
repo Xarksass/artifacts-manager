@@ -22,7 +22,6 @@ class Role:
     tasks: list[Task]|None = None
     cooldowns: dict[str,float]
     bank: Bank
-    __running: bool = False
     __stop: asyncio.Event = asyncio.Event()
 
     def __init__(self, Character: Character) -> None:
@@ -37,9 +36,6 @@ class Role:
         return await self.go_to(Location.BANK)
 
     # Class Methods
-    def is_running(self) -> bool:
-        return self.__running
-
     def set_task_cooldown(self, task:str):
         self.cooldowns[task] = time.monotonic()
 
