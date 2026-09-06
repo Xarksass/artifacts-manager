@@ -40,6 +40,13 @@ async def get_characters(request: Request) -> list[CharacterOut]:
 async def get_items(name: str, request: Request) -> InventoryOut:
      return InventoryOut.from_inventory(request.app.state.characters[name].inventory)
 
+@router.get("/{name}/logs")
+async def get_logs(name: str, request: Request) -> list[str]:
+    character = request.app.state.characters.get(name)
+    if character is None:
+        raise HTTPException(HTTP_404_NOT_FOUND, f"Character '{name}' not found")
+    return list(character.logs)
+
 @router.patch('/{name}/rest', status_code=HTTP_202_ACCEPTED)
 async def rest(name: str, request: Request):
     state = request.app.state
@@ -60,6 +67,11 @@ async def rest(name: str, request: Request):
     await character.rest()
 
     return {"status": "rested", "character": name}
+
+@router.get('/routines/active')
+async def get_active_routines(request: Request) -> list[str]:
+    pool: TaskPool = request.app.state.pool
+    return pool.active_ids
 
 class RoleIn(BaseModel):
     name:str = Field(description='Role of which to start the routine', min_length=4)

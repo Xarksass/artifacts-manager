@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
@@ -17,6 +18,7 @@ class CharacterOut(BaseModel):
     x: int
     y: int
     skin: str
+    cooldown_expiration: datetime | None
 
     @staticmethod
     def from_character(c: Character) -> CharacterOut:
@@ -30,4 +32,5 @@ class CharacterOut(BaseModel):
             x=c.pos.x,
             y=c.pos.y,
             skin=c.skin,
+            cooldown_expiration=c.cooldown.expiration if c.cooldown else None,
         )

@@ -10,13 +10,23 @@ import * as Constants from '../constants'
 import Button from "react-bootstrap/esm/Button";
 import Spinner from "react-bootstrap/esm/Spinner";
 
-export function CharacterTile(props: { data: Character }) {
+export function CharacterTile(props: { data: Character; initiallyActive: boolean }) {
     const [character, setCharacter] = useState(props.data)
     const [logs, setLogs] = useState<string[]>([])
-    const [routineActive, setRoutineActive] = useState(false)
+    const [routineActive, setRoutineActive] = useState(props.initiallyActive)
 
     const logsRef = useRef<HTMLDivElement>(null);
     const isHovering = useRef(false);
+
+    useEffect(() => {
+        fetch(`${Constants.API_URL}/character/${encodeURIComponent(character.name)}/logs`)
+            .then((res) => {
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.json();
+            })
+            .then((data: string[]) => setLogs(data))
+            .catch((err) => console.error(`Échec chargement des logs`, err));
+    }, []);
 
     const handleMessage = useCallback((message: any) => {
         if (message.name !== character.name) return;
@@ -87,7 +97,7 @@ export function CharacterTile(props: { data: Character }) {
     return <>
     <div className="character panel" key={character.name}>
         <div className="repr">
-            <CooldownBar name={character.name} />
+            <CooldownBar name={character.name} initialExpiration={character.cooldown_expiration} />
             <div className="desc">
                 <div className="name">{character.name}{/* <small>({character.x},{character.y})</small> */}</div>
                 <div className="level"><small>lvl</small> <b>{character.level}</b></div>
@@ -97,7 +107,7 @@ export function CharacterTile(props: { data: Character }) {
             </div>
             <div className="stats-actions">
                 <div className="stats">
-                    <div className="health" style={{ '--bar-value': barValue(character.hp, character.max_hp) }}>{character.hp}/{character.max_hp} HP</div>
+                    <div className="health" style={{ '--bar-value': barValue(character.hp, character.max_hp) } as React.CSSProperties}>{character.hp}/{character.max_hp} HP</div>
                     <OverlayTrigger
                         placement="bottom"
                         delay={{ show: 250, hide: 400 }}
@@ -105,7 +115,7 @@ export function CharacterTile(props: { data: Character }) {
                             <Tooltip id="button-tooltip">{character.xp}/{character.max_xp} XP</Tooltip>
                         }
                     >
-                        <div className="exp" style={{ '--bar-value': barValue(character.xp, character.max_xp) }}></div>
+                        <div className="exp" style={{ '--bar-value': barValue(character.xp, character.max_xp) } as React.CSSProperties}></div>
                     </OverlayTrigger>
                 </div>
                 <ul className="list-unstyled action-list">

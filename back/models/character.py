@@ -62,6 +62,10 @@ class Character:
     def window(self, window: CharacterWindow) -> None:
         self.__window = window
         self.window.action = 'idle' """
+    
+    @property
+    def logs(self) -> deque[str]:
+        return self.__logs
 
     @property
     def cooldown(self) -> Cooldown|None: return self.__cooldown

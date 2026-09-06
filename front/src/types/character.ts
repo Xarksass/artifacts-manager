@@ -8,4 +8,5 @@ export interface Character {
     x: number
     y: number
     skin: string
+    cooldown_expiration: string | null
 }

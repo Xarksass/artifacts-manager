@@ -8,6 +8,10 @@ class TaskPool:
         self._tasks: dict[str, asyncio.Task[Any]] = {}
         self._stop_events: dict[str, asyncio.Event] = {}
 
+    @property
+    def active_ids(self) -> list[str]:
+        return list(self._tasks.keys())
+
     def start(self, task_id: str, coro_func: Callable[[asyncio.Event], Coroutine[Any, Any, None]]) -> None:
         """Démarre une tâche identifiée par task_id.
         coro_func doit accepter l'Event d'arrêt en paramètre.
