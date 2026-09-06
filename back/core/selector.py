@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING
 
 from dataclass.task import Task
 from dto.bank import BankOut
-from dto.character import CharacterOut
+from dto.inventory import InventoryOut
 from models.bank import Bank
 
 from core.logger import get_logger
@@ -27,23 +27,22 @@ class Selector:
 
             if task.condition() and not self.__stop.is_set():
                 logger.debug(f'Execute Task {task.name}')
-                cu, _, bu = await task.action()
+                _, iu, bu = await task.action()
 
-                if cu:
-                    logger.debug('Character updated, send data to client')
-                    await manager.broadcast({
-                        "type": "character_update",
-                        "name": self.character.name,
-                        "data": CharacterOut.from_character(self.character).model_dump(),
-                    })
-
-                #if iu:
-                #    await FastAPICache.clear(namespace='INVENTORY')
+                #if cu:
+                #    logger.debug('Character updated, send data to client')
                 #    await manager.broadcast({
-                #        "type": "inventory_update",
+                #        "type": "character_update",
                 #        "name": self.character.name,
-                #        "data": InventoryOut.from_inventory(self.character.inventory).model_dump()
+                #        "data": CharacterOut.from_character(self.character).model_dump(),
                 #    })
+
+                if iu:
+                    await manager.broadcast({
+                        "type": "inventory_update",
+                        "name": self.character.name,
+                        "data": InventoryOut.from_inventory(self.character.inventory).model_dump()
+                    })
 
                 if bu:
                     logger.debug('Bank updated, send data to client')

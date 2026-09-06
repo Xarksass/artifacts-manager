@@ -55,7 +55,7 @@ class CharactersEndpoint(Endpoint):
                     await manager.broadcast({
                         'type': 'cooldown_update',
                         'name': ch.name,
-                        'cd': remaining.seconds
+                        'data': remaining.seconds
                     })
                 characters[ch.name] = ch
                 logger.info('Character Initialized ...')

@@ -5,6 +5,7 @@ from typing import TYPE_CHECKING, Any
 from core.logger import get_logger
 from core.ws_manager import manager
 from dataclass.character import SKILLS
+from dto.character import CharacterOut
 from fastapi_cache import FastAPICache
 
 from endpoints.endpoint import Endpoint
@@ -34,7 +35,7 @@ class CharacterEndpoint(Endpoint):
             await manager.broadcast({
                 'type': 'cooldown_update',
                 'name': self.name,
-                'cd': self.cooldown.remaining
+                'data': self.cooldown.remaining
             })
 
         logger.debug('parse data')
@@ -47,14 +48,31 @@ class CharacterEndpoint(Endpoint):
             elif 'characters' in dt:
                 ch = dt['characters'][0]
             if ch is not None:
+                cu = False
+
                 if self.character.level != ch['level']:
+                    cu = True
                     await self.character.log(f'Level Up! {self.character.level} -> {ch['level']}')
                     self.character.level = ch['level']
-                    self.character.max_hp = ch['max_xp']
-                if self.character.hp != ch['xp']: self.character.hp = ch['xp']
-                if self.character.hp != ch['hp']: self.character.hp = ch['hp']
-                if self.character.max_hp != ch['max_hp']: self.character.max_hp = ch['max_hp']
-                if self.character.inventory.max_items != ch['inventory_max_items']: self.character.inventory.max_items = ch['inventory_max_items']
+                    self.character.max_xp = ch['max_xp']
+                if self.character.xp != ch['xp']:
+                    cu = True
+                    self.character.xp = ch['xp']
+                if self.character.hp != ch['hp']:
+                    cu = True
+                    self.character.hp = ch['hp']
+                if self.character.max_hp != ch['max_hp']:
+                    cu = True
+                    self.character.max_hp = ch['max_hp']
+                if self.character.inventory.max_items != ch['inventory_max_items']:
+                    self.character.inventory.max_items = ch['inventory_max_items']
+
+                if cu:
+                    await manager.broadcast({
+                        "type": "character_update",
+                        "name": self.character.name,
+                        "data": CharacterOut.from_character(self.character).model_dump(),
+                    })
 
                 for k, skill in SKILLS.items():
                     logger.debug(f'{skill}: {k} {ch[k]}')

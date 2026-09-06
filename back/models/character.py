@@ -36,7 +36,7 @@ class Character:
     role: Role
     api: CharacterEndpoint
     _next_ready_at: float | None # deadline absolue (loop.time())
-    __cooldown: Cooldown
+    __cooldown: Cooldown | None = None
     __logs: deque[str]
     #__window: CharacterWindow
 
@@ -64,7 +64,7 @@ class Character:
         self.window.action = 'idle' """
 
     @property
-    def cooldown(self) -> Cooldown: return self.__cooldown
+    def cooldown(self) -> Cooldown|None: return self.__cooldown
 
     @cooldown.setter
     def cooldown(self, cd: Cooldown) -> None:
@@ -79,7 +79,7 @@ class Character:
         await manager.broadcast({
             'type': 'log_update',
             'name': self.name,
-            'logs': self.__logs
+            'data': list(self.__logs)
         })
 
     def next_ready_at(self) -> float | None:
