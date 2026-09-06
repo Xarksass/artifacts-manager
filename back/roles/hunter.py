@@ -73,16 +73,17 @@ class Hunter(Role):
 
         logger.debug(f"bank.is_in_bank(itemtype='consumable',effects=['heal']) = {self.bank.is_in_bank(itemtype='consumable',effects=['heal'])}")
         return self.bank.is_in_bank(itemtype='consumable',effects=['heal'])
-
-        #last_attempt = self.cooldowns.get("withdraw_heal_item", 0)
-        #return time.monotonic() - last_attempt >= COOLDOWN 
     
     def store_resources_condition(self) -> bool:
         logger.debug('--- store_resources_condition ---')
-        logger.debug(f"self.character.inventory.is_full() = {self.character.inventory.is_full()}")
-        logger.debug(f"bool(self.character.inventory.pick(itemtype='resource')) = {bool(self.character.inventory.pick(itemtype='resource'))}")
-        #return self.character.inventory.is_full() and bool(self.character.inventory.pick(itemtype='resource'))
-        return self.character.inventory.is_full() or len(self.character.inventory.pick(itemtype='resource')) > 20
+        resources = self.character.inventory.pick(itemtype='resource')
+        if self.character.inventory.is_full() and resources:
+            return True
+
+        if resources:
+            total = sum([r.quantity for r in resources.values()])
+            return total >= 20
+        return False
 
     # Actions
     async def heal(self) -> tuple[bool,bool,bool]:
@@ -111,5 +112,3 @@ class Hunter(Role):
     async def withdraw_heal_item(self) -> tuple[bool,bool,bool]:
         await self.bank.ask_for_withdraw(self.character, quantity=5, itemtype='consumable', effects=['heal'])
         return False, True, True
-        #if not success:
-        #    self.cooldowns["withdraw_heal_item"] = time.monotonic()
