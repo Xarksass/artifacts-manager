@@ -27,21 +27,13 @@ class Selector:
 
             if task.condition() and not self.__stop.is_set():
                 logger.debug(f'Execute Task {task.name}')
-                _, iu, bu = await task.action()
-
-                #if cu:
-                #    logger.debug('Character updated, send data to client')
-                #    await manager.broadcast({
-                #        "type": "character_update",
-                #        "name": self.character.name,
-                #        "data": CharacterOut.from_character(self.character).model_dump(),
-                #    })
+                iu, bu = await task.action()
 
                 if iu:
                     await manager.broadcast({
                         "type": "inventory_update",
                         "name": self.character.name,
-                        "data": InventoryOut.from_inventory(self.character.inventory).model_dump()
+                        "data": InventoryOut.from_inventory(self.character.inventory).model_dump(mode="json")
                     })
 
                 if bu:

@@ -1,11 +1,10 @@
 import asyncio
 from typing import TYPE_CHECKING, Any, Self
 
-from fastapi_cache import FastAPICache
-
 from core.logger import get_logger
 from dataclass.item import Item
 from endpoints.items import BankEndpoint, ItemsEndpoint
+from fastapi_cache import FastAPICache
 
 from models.items import Items
 
@@ -46,21 +45,21 @@ class Bank(Items):
                         if quantity < 1:
                             raise ValueError
                         
-                        #character.window.log(f"⏳ Store {quantity} {item.name} into the bank...")
+                        await character.log(f"⏳ Store {quantity} {item.name} into the bank...")
                         response = await character.api.store(item.code, quantity)
                         if response:
                             await character.inventory.update(item.code, (quantity * -1))
-                            #character.window.log(f"🏦 Stored {quantity} {item.name} into the bank")
+                            await character.log(f"🏦 Stored {quantity} {item.name} into the bank")
                             if not success: success = True
                     elif items is not None and len(items):
-                        #character.window.log("⏳ Store multiple items into the bank...")
+                        await character.log("⏳ Store multiple items into the bank...")
                         response = await character.api.store(items=items)
                         if response:
                             for si in items:
                                 stored = await character.inventory.update(si['code'], (si['quantity'] * -1)) # type: ignore
                                 si['name'] = stored.name if isinstance(stored, Item) else si['code']
-                            #stored_items_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in items])
-                            #character.window.log(f"🏦 {stored_items_str} stored into the bank")
+                            stored_items_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in items])
+                            await character.log(f"🏦 {stored_items_str} stored into the bank")
                             if not success: success = True
                 
                 await FastAPICache.clear(namespace='BANK')
@@ -118,20 +117,20 @@ class Bank(Items):
     @classmethod
     async def withdraw(cls, character: Character, *, item:Item|None = None, quantity: int|None = None, items: list[dict[str,str|int]]|None = None) -> dict[str,Any]:
         if item and quantity:
-            #character.window.log(f"⏳ withdraw {quantity} {item.name} from the bank...")
+            await character.log(f"⏳ withdraw {quantity} {item.name} from the bank...")
             response = await character.api.withdraw(item=item.code, quantity=quantity)
             if response:
                 await character.inventory.update(item.code, quantity)
-                #character.window.log(f"🏦 withdrawn {quantity} {item.name} from the bank")
+                await character.log(f"🏦 withdrawn {quantity} {item.name} from the bank")
         elif items is not None and len(items):
-            #character.window.log("⏳ withdraw multiple items from the bank...")
+            await character.log("⏳ withdraw multiple items from the bank...")
             response = await character.api.withdraw(items=items)
             if response:
                 for wi in items:
                     withdrawn = await character.inventory.update(wi['code'], wi['quantity']) # type: ignore
                     wi['name'] = withdrawn.name if isinstance(withdrawn, Item) else wi['code']
-                #w_items_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in items])
-                #character.window.log(f"🏦 {w_items_str} withdrawn from the bank")
+                w_items_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in items])
+                await character.log(f"🏦 {w_items_str} withdrawn from the bank")
         else:
             response = {}
         return response
