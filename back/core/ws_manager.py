@@ -29,6 +29,14 @@ class ConnectionManager:
     async def broadcast(self, message: dict[str, Any]) -> None:
         if not self._connections:
             return
+
+        try:
+            import json
+            json.dumps(message)  # valide la sérialisabilité une seule fois, avant d'itérer
+        except TypeError:
+            logger.error(f"Message non sérialisable, broadcast annulé: {message.get('type')}")
+            return
+    
         async with self._lock:
             connections = list(self._connections)
 
