@@ -3,7 +3,7 @@ import { useWebSocketMessage } from "../contexts/WebSocketContext";
 
 export function CooldownBar(props: { name: string }) {
     const [duration, setDuration] = useState('0s');
-    const [width, setWidth] = useState('100%');
+    const [width, setWidth] = useState('0%');
     const barRef = useRef(null);
 
     const handleMessage = useCallback((message: any) => {

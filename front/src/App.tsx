@@ -8,7 +8,7 @@ function App() {
   {/* <div id='general-panel' className='panel'>
     <BankList />
   </div> */}
-  <div id='bottombar-panel' className='panel'></div>
+  {/* <div id='bottombar-panel' className='panel'></div> */}
   </>
 }
 

@@ -15,6 +15,8 @@ export function WebSocketProvider({ children }: { children: ReactNode }) {
     useEffect(() => {
         const ws = new WebSocket(Constants.WS_URL);
 
+        ws.onopen = () => console.log("WS connecté ✔️");
+
         ws.onmessage = (event) => {
             const message = JSON.parse(event.data);
             handlers.current.forEach((handler) => handler(message));

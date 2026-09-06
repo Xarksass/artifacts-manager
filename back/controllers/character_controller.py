@@ -1,17 +1,19 @@
-#from decorators.invalidate_cache_decorator import invalidate_cache
-#from dto.requests.task_dto import EditTaskDto, ExportTaskDto, ListTaskDto, TaskDto
-#from dto.responses import tasklist_dto as TaskList
+from datetime import UTC, datetime
+from typing import Annotated
+
 from core.task_pool import TaskPool
 from dto.character import CharacterOut
+from dto.inventory import InventoryOut
 from fastapi import (
-    APIRouter,
-    HTTPException,
-    Request,
+     APIRouter,
+     Body,
+     HTTPException,
+     Request,
 )
-
-#from fastapi.responses import StreamingResponse
 from fastapi_cache.decorator import cache
 from models.character import Character
+from pydantic import BaseModel, Field
+from roles.artisan import Artisan
 from roles.cook import Cook
 from roles.gatherer import Gatherer
 from roles.hunter import Hunter
@@ -21,9 +23,10 @@ from starlette.status import *  # type: ignore[reportWildcardImportFromLibrary]
 router = APIRouter(prefix='/character', tags=['character'])
 
 Roles: dict[str,type[Role]] = {
-    'Hunter': Hunter,
+    'Artisan': Artisan,
     'Cook': Cook,
     'Gatherer': Gatherer,
+    'Hunter': Hunter,
 }
 
 @router.get('/all')
@@ -32,20 +35,69 @@ async def get_characters(request: Request) -> list[CharacterOut]:
      characters: dict[str,Character] = request.app.state.characters
      return [CharacterOut.from_character(c) for c in characters.values()]
 
-@router.patch("/{name}/routine", status_code=202)
-async def start_routine(name: str, request: Request):
+@router.get("/{name}/inventory")
+@cache(expire=60, namespace='INVENTORY')
+async def get_items(name: str, request: Request) -> InventoryOut:
+     return InventoryOut.from_inventory(request.app.state.characters[name].inventory)
+
+@router.patch('/{name}/rest', status_code=HTTP_202_ACCEPTED)
+async def rest(name: str, request: Request):
+    state = request.app.state
+    pool: TaskPool = state.pool
+    character:Character|None = state.characters.get(name)
+    if character is None:
+        raise HTTPException(HTTP_404_NOT_FOUND, f"Character '{name}' not found")
+
+    # check current routine
+    if pool.is_running(name):
+        raise HTTPException(HTTP_409_CONFLICT, f"Routine running for '{name}', stop routine before trying again")
+
+    # check cooldown
+    if character.cooldown is not None and character.cooldown.expiration >= datetime.now(UTC):
+        raise HTTPException(HTTP_409_CONFLICT, f"'{name}' is on cooldown, try again later")
+    
+    # rest
+    await character.rest()
+
+    return {"status": "rested", "character": name}
+
+class RoleIn(BaseModel):
+    name:str = Field(description='Role of which to start the routine', min_length=4)
+
+@router.patch("/{name}/routine/start", status_code=HTTP_202_ACCEPTED)
+async def start_routine(name: str, role: Annotated[RoleIn, Body()], request: Request):
     state = request.app.state
     pool: TaskPool = state.pool
     character = state.characters.get(name)
     if character is None:
-        raise HTTPException(404, f"Character '{name}' not found")
+        raise HTTPException(HTTP_404_NOT_FOUND, f"Character '{name}' not found")
+
+    if role.name not in Roles:
+        raise HTTPException(HTTP_404_NOT_FOUND, f'Role {role.name} not found')
 
     # check current routine
     if pool.is_running(name):
-        raise HTTPException(409, f"Routine already running for '{name}'")
+        raise HTTPException(HTTP_409_CONFLICT, f"Routine already running for '{name}'")
 
     # assign routine
-    character.role = Roles['Hunter'](character)
+    character.role = Roles[role.name](character)
     pool.start(character.name,character.role.routine)
 
     return {"status": "started", "character": name}
+
+@router.patch("/{name}/routine/stop", status_code=HTTP_202_ACCEPTED)
+async def stop_routine(name: str, request: Request):
+    state = request.app.state
+    pool: TaskPool = state.pool
+    character = state.characters.get(name)
+    if character is None:
+        raise HTTPException(HTTP_404_NOT_FOUND, f"Character '{name}' not found")
+
+    # check current routine
+    if not pool.is_running(name):
+        raise HTTPException(HTTP_409_CONFLICT, f"No running routine for '{name}'")
+
+    # stop routine
+    await pool.stop_and_wait(name)
+
+    return {"status": "stopped", "character": name}
