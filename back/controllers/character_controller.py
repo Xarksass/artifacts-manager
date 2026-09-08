@@ -13,22 +13,24 @@ from fastapi import (
 from fastapi_cache.decorator import cache
 from models.character import Character
 from pydantic import BaseModel, Field
-from roles.artisan import Artisan
 from roles.cook import Cook
-from roles.gatherer import Gatherer
+from roles.fisherman import Fisherman
 from roles.hunter import Hunter
+from roles.lumberjack import Lumberjack
 from roles.miner import Miner
+from roles.picker import Picker
 from roles.role import Role
 from starlette.status import *  # type: ignore[reportWildcardImportFromLibrary]
 
 router = APIRouter(prefix='/character', tags=['character'])
 
 Roles: dict[str,type[Role]] = {
-    'Artisan': Artisan,
     'Cook': Cook,
-    'Gatherer': Gatherer,
+    'Fisherman': Fisherman,
     'Hunter': Hunter,
+    'Lumberjack': Lumberjack,
     'Miner': Miner,
+    'Picker': Picker,
 }
 
 @router.get('/all')

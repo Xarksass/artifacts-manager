@@ -12,21 +12,30 @@ class Workshop:
     GEAR = Position(3,1)
     JEWELRY = Position(1,3)
     ALCHEMY = Position(2,3)
-    WOODCUTTING = Position(-2,-3)
+    SAWMILL = Position(-2,-3)
     FORGE = Position(1,5)
 
 class NPC:
     TASK = Position(1,2)
     TAILOR = Position(3,3)
 
-class Resource:
-    ASH = Position(-1,0)
+class Plant:
     SUNFLOWER = Position(2,2)
+    NETTLE = Position(7,14)
+    GLOWSTEM = Position(1,10)
+
+class Ore:
     COPPER = Position(2,0)
     IRON = Position(1,7)
     COAL = Position(1,6)
 
-class FishLocation:
+class Wood:
+    ASH = Position(-1,0)
+    SPRUCE = Position(2,6)
+    BIRCH = Position(3,5)
+    MAPPLE = Position(1,12)
+
+class Fish:
     GUDGEON = Position(4,2)
     SHRIMP = Position(5,2)
     BASS = Position(6,12)
@@ -36,6 +45,7 @@ class Monster:
     CHICKEN = Position(0,1)
     YELLOW_SLIME = Position(1,-2)
     GREEN_SLIME = Position(0,-1)
+    SHEEP = Position(5,12)
     BLUE_SLIME = Position(0,-2)
     RED_SLIME = Position(1,-1)
     COW = Position(0,2)

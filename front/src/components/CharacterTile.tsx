@@ -154,20 +154,26 @@ export function CharacterTile(props: { data: Character; initiallyActive: boolean
                                         <Popover.Header as="h3">Choose a Role</Popover.Header>
                                         <Popover.Body>
                                             <ul className="list-unstyled role-list">
-                                                <li>
+                                                {/* <li>
                                                     <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Artisan')} title="Artisan" disabled><span className="ico ico-artisan"></span></Button>
                                                 </li>
                                                 <li>
                                                     <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Cook')} title="Cook"><span className="ico ico-cook"></span></Button>
+                                                </li> */}
+                                                <li>
+                                                    <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Miner')} title="Miner"><span className="ico ico-pickaxe"></span></Button>
                                                 </li>
                                                 <li>
-                                                    <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Gatherer')} title="Gatherer"><span className="ico ico-gatherer"></span></Button>
+                                                    <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Lumberjack')} title="Lumberjack"><span className="ico ico-axe"></span></Button>
+                                                </li>
+                                                <li>
+                                                    <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Fisherman')} title="Fisherman"><span className="ico ico-fishing-hook"></span></Button>
+                                                </li>
+                                                <li>
+                                                    <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Picker')} title="Picker"><span className="ico ico-gatherer"></span></Button>
                                                 </li>
                                                 <li>
                                                     <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Hunter')} title="Hunter"><span className="ico ico-hunter"></span></Button>
-                                                </li>
-                                                <li>
-                                                    <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Miner')} title="Miner"><span className="ico ico-pickaxe"></span></Button>
                                                 </li>
                                             </ul>
                                         </Popover.Body>

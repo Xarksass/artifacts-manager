@@ -23,9 +23,6 @@ from models.bank import Bank
 from redis import asyncio as aioredis  # type: ignore
 from utils.application_tools import load_routers
 
-#import logging
-#logging.getLogger("fastapi_cache").setLevel(logging.DEBUG)
-#logging.getLogger("fastapi_cache").addHandler(logging.StreamHandler())
 logger = get_logger(__name__,'main')
 
 characters_endpoint = CharactersEndpoint()
@@ -93,5 +90,5 @@ if __name__ == "__main__":
         'server:app',
         host = os.getenv('UVICORN_HOST', '127.0.0.1'),
         port = 8000,
-        reload = True
+        #reload = True
     )

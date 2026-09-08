@@ -1,12 +1,10 @@
 import time
-from collections.abc import Callable
-from typing import Any
 
 from core.logger import get_logger
 from dataclass.task import Task
 from models.character import Character
 from models.inventory import Item
-from models.locations import FishLocation, Location, Workshop
+from models.locations import Location, Workshop
 
 from roles.role import COOLDOWN, Role
 
@@ -24,50 +22,8 @@ class Cook(Role):
             Task('store_cooked_food', self.store_cooked_food_condtion, self.store_cooked_food),
             Task('store_resources', self.store_resources_condtion, self.store_resources),
             Task('withdraw_raw_food', self.withdraw_raw_food_condtion, self.withdraw_raw_food),
-            Task('go_fishing', self.go_fishing_condition, self.go_fishing),
-            Task('fishing', self.fishing_condition, self.fishing),
         ]
         super().__init__(Character)
-
-        self.fishes: dict[str,dict[str,Any|Callable[[int],bool]]] = {
-            'gudgeon': {
-                'required': lambda lvl: lvl > 0,
-                'gathered': 0,
-                'threshold': 20,
-                'location': FishLocation.GUDGEON,
-            },
-            'shrimp': {
-                'required': lambda lvl: 9 < lvl < 20,
-                'gathered': 0,
-                'threshold': 20,
-                'location': FishLocation.SHRIMP,
-            },
-            'trout': {
-                'required': lambda lvl: 19 < lvl < 30,
-                'gathered': 0,
-                'threshold': 20,
-                'location': FishLocation.TROUT,
-            },
-            'boss': {
-                'required': lambda lvl: 29 < lvl,
-                'gathered': 0,
-                'threshold': 20,
-                'location': FishLocation.BASS,
-            },
-        }
-        self.fishes_iterable = iter(self.fishes.items())
-        self.current = self.get_next_valid_fish()
-
-    def get_next_valid_fish(self) -> tuple[str,dict[str,Any|Callable[[int],bool]]]:
-        try:
-            next_fish = next(self.fishes_iterable)
-            if not next_fish[1]['required'](self.character.skills.fishing):
-                self.fishes_iterable = iter(self.fishes.items())
-                next_fish = next(self.fishes_iterable)
-        except StopIteration:
-            self.fishes_iterable = iter(self.fishes.items())
-            next_fish = next(self.fishes_iterable)
-        return next_fish
 
     # Conditions
     def go_to_cooking_condition(self) -> bool:
@@ -106,13 +62,7 @@ class Cook(Role):
         if raw_food:
             return False
 
-        return self.bank.is_in_bank(itemtype='resource',subtypes=['mob','fishing'])
-
-    def go_fishing_condition(self) -> bool:
-        return self.fishing_condition() and self.character.pos != self.current[1]['location']
-
-    def fishing_condition(self) -> bool:
-        return not self.character.inventory.is_full()
+        return self.bank.is_in_bank(itemtype='resource', skills=['cooking'])
     
     # Actions
     async def go_to_cooking(self) -> tuple[bool,bool]:
@@ -161,19 +111,4 @@ class Cook(Role):
 
             await self.bank.deposit(self.character, items=to_store)
             return True, True
-        return False, False
-
-    async def go_fishing(self) -> tuple[bool,bool]:
-        return await self.go_to(self.current[1]['location']) # type: ignore
-
-    async def fishing(self) -> tuple[bool,bool]:
-        response = await self.character.gather()
-        if len(response):
-            for drop in response:
-                if drop['code'] == self.current[0]:
-                    self.current[1]['gathered'] += drop['quantity']
-                    if self.current[1]['gathered'] >= self.current[1]['threshold']: # type: ignore
-                        self.current[1]['gathered'] = 0
-                        self.current = self.get_next_valid_fish()
-            return True, False
         return False, False

@@ -1,0 +1,42 @@
+from dataclass.item import ResourceType
+from models.character import Character
+from models.locations import Fish
+
+from roles.gatherer import Gatherer
+
+
+class Fisherman(Gatherer):
+    className = 'Fisherman'
+    
+    def __init__(self, Character: Character) -> None:
+        self.resources = {
+            'gudgeon': ResourceType(
+                code = 'gudgeon',
+                required = lambda lvl: lvl > 0,
+                gathered = 0,
+                threshold = 100,
+                location = Fish.GUDGEON,
+            ),
+            'shrimp': ResourceType(
+                code = 'shrimp',
+                required = lambda lvl: 9 < lvl,
+                gathered = 0,
+                threshold = 100,
+                location = Fish.SHRIMP,
+            ),
+            'bass': ResourceType(
+                code = 'bass',
+                required = lambda lvl: 19 < lvl,
+                gathered = 0,
+                threshold = 100,
+                location = Fish.BASS,
+            ),
+            'birctrouth': ResourceType(
+                code = 'trout',
+                required = lambda lvl: 19 < lvl,
+                gathered = 0,
+                threshold = 100,
+                location = Fish.TROUT,
+            ),
+        }
+        super().__init__(Character)
