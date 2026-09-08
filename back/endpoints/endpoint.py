@@ -25,31 +25,6 @@ logger = get_logger(__name__,'endpoint')
 
 cache_namespace = 'API'
 
-#def _cache_path(key: str) -> Path:
-#    return CACHE_DIR / f"{key}.json"
-
-@cache(expire=600, namespace=cache_namespace)
-async def fetch_data(path: str, params: dict[str,Any]|None = None) -> dict[str,Any]:
-    #cache_key = sha256(
-    #    f"{path.replace("/", "_")}:{json.dumps(params)}".encode()
-    #).hexdigest()
-    #cache_file = _cache_path(cache_key)
-    
-    #if cache_file.exists():
-    #    logger.debug(f'[FILE_CACHE] {cache_file}')
-    #    return json.loads(cache_file.read_text())
-
-    if params is None: params = {}
-    
-    response = await get_client().get(path, params=params)
-    response.raise_for_status()
-    data = response.json()
-
-    logger.debug('Response recieved from API')
-    
-    #cache_file.write_text(json.dumps(data))
-    return data
-
 _cached_fetchers: dict[str, Callable[..., Awaitable[dict[str, Any]]]] = {}
 
 def _get_cached_fetch(namespace: str, expire: int) -> Callable[..., Awaitable[dict[str, Any]]]:
