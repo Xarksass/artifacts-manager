@@ -1,5 +1,8 @@
 services:
   back:
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
     build:
       context: ./back
       dockerfile: Dockerfile.dev
