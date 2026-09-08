@@ -102,7 +102,7 @@ class CharacterEndpoint(Endpoint):
     async def use(self, item:str, quantity:int = 1) -> dict[str,Any]:
         response = await self.action('use', { "code": item, "quantity": quantity })
         if response:
-            await self.character.inventory.update(item, (quantity * -1))
+            await self.character.inventory.remove(item, quantity)
         return response
 
     async def craft(self, item:str, quantity:int = 1) -> dict[str,Any]:

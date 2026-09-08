@@ -4,6 +4,7 @@ from typing import Any, overload
 from core.logger import get_logger
 from dataclass.item import Item, Recipe
 from endpoints.items import ItemsEndpoint
+from fastapi_cache import FastAPICache
 
 logger = get_logger(__name__,'items')
 
@@ -98,3 +99,35 @@ class Items(ABC):
                 return parsed_items
             else:
                 return {item.code:item for item in items.values() if item.quantity > 0}
+
+    @staticmethod
+    async def update(api: ItemsEndpoint, items: dict[str, Item], item:str, quantity:int, namespace: str) -> Item|None:
+        stored = items.get(item)
+
+        if stored is None:
+            if quantity < 0:
+                return
+            
+            item_data = await api.get(item)
+            if item_data:
+                crafts = await Items.get_recipes(api, item_data['code'])
+
+                stored = Item(
+                    item_data['name'], 
+                    item_data['code'], 
+                    item_data['level'], 
+                    item_data['type'], 
+                    item_data['subtype'], 
+                    item_data['conditions'], 
+                    {effect['code']:effect['value'] for effect in item_data['effects']}, 
+                    crafts, 
+                    item_data['tradeable'], 
+                    item_data['recyclable'], 
+                    quantity
+                )
+                items[item_data['code']] = stored
+        else:
+            stored.quantity += quantity
+
+        await FastAPICache.clear(namespace=namespace)
+        return stored

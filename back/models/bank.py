@@ -16,6 +16,7 @@ logger = get_logger(__name__,'bank')
 class Bank(Items):
     instance: Self|None = None
     items: dict[str,Item]
+    total: int = 0
     api: BankEndpoint
     access_loc: asyncio.Lock
 
@@ -48,7 +49,9 @@ class Bank(Items):
                         await character.log(f"⏳ Store {quantity} {item.name} into the bank...")
                         response = await character.api.store(item.code, quantity)
                         if response:
-                            await character.inventory.update(item.code, (quantity * -1))
+                            await character.inventory.remove(item.code, quantity)
+                            await cls.add(item.code, (quantity * -1))
+
                             await character.log(f"🏦 Stored {quantity} {item.name} into the bank")
                             if not success: success = True
                     elif items is not None and len(items):
@@ -56,7 +59,9 @@ class Bank(Items):
                         response = await character.api.store(items=items)
                         if response:
                             for si in items:
-                                stored = await character.inventory.update(si['code'], (si['quantity'] * -1)) # type: ignore
+                                stored = await character.inventory.remove(si['code'], si['quantity']) # type: ignore
+                                await cls.add(si['code'], si['quantity']) # type: ignore
+
                                 si['name'] = stored.name if isinstance(stored, Item) else si['code']
                             stored_items_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in items])
                             await character.log(f"🏦 {stored_items_str} stored into the bank")
@@ -120,14 +125,17 @@ class Bank(Items):
             await character.log(f"⏳ withdraw {quantity} {item.name} from the bank...")
             response = await character.api.withdraw(item=item.code, quantity=quantity)
             if response:
-                await character.inventory.update(item.code, quantity)
+                await character.inventory.add(item.code, quantity)
+                await cls.remove(item.code, quantity)
                 await character.log(f"🏦 withdrawn {quantity} {item.name} from the bank")
         elif items is not None and len(items):
+            logger.debug(f'Trying to withdraw {items!s}')
             await character.log("⏳ withdraw multiple items from the bank...")
             response = await character.api.withdraw(items=items)
             if response:
                 for wi in items:
-                    withdrawn = await character.inventory.update(wi['code'], wi['quantity']) # type: ignore
+                    withdrawn = await character.inventory.add(wi['code'], wi['quantity']) # type: ignore
+                    await cls.remove(wi['code'], wi['quantity']) # type: ignore
                     wi['name'] = withdrawn.name if isinstance(withdrawn, Item) else wi['code']
                 w_items_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in items])
                 await character.log(f"🏦 {w_items_str} withdrawn from the bank")
@@ -149,3 +157,14 @@ class Bank(Items):
             return False
         else:
             return bool(len(cls.items))
+
+        
+    @classmethod
+    async def add(cls, item:str, quantity:int):
+        cls.total += quantity
+        return await super().update(ItemsEndpoint(), cls.items, item, quantity, 'BANK')
+
+    @classmethod
+    async def remove(cls, item:str, quantity:int):
+        cls.total -= quantity
+        return await super().update(ItemsEndpoint(), cls.items, item, (quantity * -1), 'BANK')

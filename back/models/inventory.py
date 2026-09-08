@@ -3,7 +3,6 @@ from typing import Any, Self, overload
 from core.logger import get_logger
 from dataclass.item import Item
 from endpoints.items import ItemsEndpoint
-from fastapi_cache import FastAPICache
 
 from models.items import Items
 
@@ -39,37 +38,12 @@ class Inventory(Items):
 
     def is_full(self) -> bool:
         return self.total >= self.max_items
-    
-    async def update(self, item:str, quantity:int) -> Item|None:
-        stored = self.items.get(item)
 
-        if stored is None:
-            if quantity < 0:
-                return
-            
-            item_data = await self.api.get(item)
-            if item_data:
-                crafts = await super().get_recipes(self.api, item_data['code'])
+    async def add(self, item:str, quantity:int):
+        self.total += quantity
+        return await super().update(self.api, self.items, item, quantity, 'INVENTORY')
 
-                stored = Item(
-                    item_data['name'], 
-                    item_data['code'], 
-                    item_data['level'], 
-                    item_data['type'], 
-                    item_data['subtype'], 
-                    item_data['conditions'], 
-                    {effect['code']:effect['value'] for effect in item_data['effects']}, 
-                    crafts, 
-                    item_data['tradeable'], 
-                    item_data['recyclable'], 
-                    quantity
-                )
-                self.items[item_data['code']] = stored
-                self.total += quantity
-        else:
-            self.total += quantity
-            stored.quantity += quantity
-
-        await FastAPICache.clear(namespace='INVENTORY')
-        return stored
+    async def remove(self, item:str, quantity:int):
+        self.total -= quantity
+        return await super().update(self.api, self.items, item, (quantity * -1), 'INVENTORY')
         
