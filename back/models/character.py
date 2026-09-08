@@ -178,7 +178,7 @@ class Character:
                     
                     if len(fight_stats["drops"]) > 0:
                         for d in fight_stats['drops']:
-                            drop = await self.inventory.update(d['code'], d['quantity'])
+                            drop = await self.inventory.add(d['code'], d['quantity'])
                             d['name'] = drop.name if isinstance(drop, Item) else d['code']
                         drops_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in fight_stats["drops"]])
                         await self.log(f"🎁 Loot dropped: {drops_str}")
@@ -235,9 +235,9 @@ class Character:
         await self.log(f'⏳ Crafting {quantity} {recipe.name} ...')
         response = await self.api.craft(recipe.code, quantity)
         if response:
-            await self.inventory.update(recipe.code, quantity)
+            await self.inventory.add(recipe.code, quantity)
             for code, q_needed in recipe.items.items():
-                await self.inventory.update(code, (q_needed * quantity * -1))
+                await self.inventory.remove(code, (q_needed * quantity))
             await self.log(f'⚒️ {quantity} {recipe.name} created')
         return response
 
@@ -246,7 +246,7 @@ class Character:
         response = await self.api.gather()
         if response and 'details' in response:
             for d in response['details']['items']:
-                drop = await self.inventory.update(d['code'], d['quantity'])
+                drop = await self.inventory.add(d['code'], d['quantity'])
                 d['name'] = drop.name if isinstance(drop, Item) else d['code']
             drops_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in response['details']['items']])
             await self.log(f"⛏️  Resource(s) gathered: {drops_str}")
