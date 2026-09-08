@@ -20,6 +20,7 @@ logger = get_logger(__name__,'role')
 class Role:
     className:str = 'Peasant'
     tasks: list[Task]|None = None
+    priority_tasks:asyncio.Queue[Task]
     cooldowns: dict[str,float]
     bank: Bank
     __stop: asyncio.Event = asyncio.Event()
@@ -28,8 +29,9 @@ class Role:
         super().__init__()
         self.character = Character
         self.cooldowns = {}
+        self.priority_tasks = asyncio.Queue()
         if self.tasks is not None:
-            self.selector = Selector(self.character, self.tasks, self.__stop)
+            self.selector = Selector(self.character, self.tasks, self.__stop, self.priority_tasks)
 
     # Actions
     async def go_to_bank(self) -> tuple[bool,bool]:
