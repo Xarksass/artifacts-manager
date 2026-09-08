@@ -166,6 +166,9 @@ export function CharacterTile(props: { data: Character; initiallyActive: boolean
                                                 <li>
                                                     <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Hunter')} title="Hunter"><span className="ico ico-hunter"></span></Button>
                                                 </li>
+                                                <li>
+                                                    <Button variant="outline-light" onClick={() => startRoutine(character.name, 'Miner')} title="Miner"><span className="ico ico-pickaxe"></span></Button>
+                                                </li>
                                             </ul>
                                         </Popover.Body>
                                     </Popover>

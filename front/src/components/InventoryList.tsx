@@ -9,11 +9,11 @@ export function InventoryList(props: { name: string }) {
     return <>
     <p>{total} / {max} items</p>
     <ul className="list-unstyled item-grid">
-        {items.map((item) => (
+        {items.map((item) => { if (item.quantity) return (
             <li key={item.name}>
                 <ItemTile item={item} />
             </li>
-        ))}
+        )})}
     </ul>
     </>
 }

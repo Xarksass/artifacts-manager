@@ -3,9 +3,9 @@
 @font-face {
   font-family: '#{$icomoon-font-family}';
   src:
-    url('#{$icomoon-font-path}/#{$icomoon-font-family}.ttf?3rc37n') format('truetype'),
-    url('#{$icomoon-font-path}/#{$icomoon-font-family}.woff?3rc37n') format('woff'),
-    url('#{$icomoon-font-path}/#{$icomoon-font-family}.svg?3rc37n##{$icomoon-font-family}') format('svg');
+    url('#{$icomoon-font-path}/#{$icomoon-font-family}.ttf?dyit08') format('truetype'),
+    url('#{$icomoon-font-path}/#{$icomoon-font-family}.woff?dyit08') format('woff'),
+    url('#{$icomoon-font-path}/#{$icomoon-font-family}.svg?dyit08##{$icomoon-font-family}') format('svg');
   font-weight: normal;
   font-style: normal;
   font-display: block;
@@ -26,6 +26,11 @@
   -moz-osx-font-smoothing: grayscale;
 }
 
+.ico-pickaxe {
+  &:before {
+    content: $ico-pickaxe; 
+  }
+}
 .ico-armor {
   &:before {
     content: $ico-armor; 
@@ -64,6 +69,11 @@
 .ico-role {
   &:before {
     content: $ico-role; 
+  }
+}
+.ico-running {
+  &:before {
+    content: $ico-running; 
   }
 }
 .ico-character {
