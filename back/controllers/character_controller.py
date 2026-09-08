@@ -17,6 +17,7 @@ from roles.artisan import Artisan
 from roles.cook import Cook
 from roles.gatherer import Gatherer
 from roles.hunter import Hunter
+from roles.miner import Miner
 from roles.role import Role
 from starlette.status import *  # type: ignore[reportWildcardImportFromLibrary]
 
@@ -27,6 +28,7 @@ Roles: dict[str,type[Role]] = {
     'Cook': Cook,
     'Gatherer': Gatherer,
     'Hunter': Hunter,
+    'Miner': Miner,
 }
 
 @router.get('/all')

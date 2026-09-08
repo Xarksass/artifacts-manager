@@ -12,6 +12,8 @@ class Workshop:
     GEAR = Position(3,1)
     JEWELRY = Position(1,3)
     ALCHEMY = Position(2,3)
+    WOODCUTTING = Position(-2,-3)
+    FORGE = Position(1,5)
 
 class NPC:
     TASK = Position(1,2)
@@ -21,6 +23,8 @@ class Resource:
     ASH = Position(-1,0)
     SUNFLOWER = Position(2,2)
     COPPER = Position(2,0)
+    IRON = Position(1,7)
+    COAL = Position(1,6)
 
 class FishLocation:
     GUDGEON = Position(4,2)

@@ -1,11 +1,22 @@
+from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
+
+from dataclass.location import Position
 
 
 @dataclass
 class BaseItem:
     code: str
     quantity: int
+
+@dataclass
+class ResourceType:
+    code: str
+    required: Callable[[int],bool]
+    gathered: int
+    threshold: int
+    location: Position
 
 @dataclass
 class Recipe:
