@@ -1,7 +1,7 @@
-from dataclass.location import Position
+from schemas.location import Position
 
 
-class Location:
+class Place:
     SPAWN = Position(0,0)
     BANK = Position(4,1)
     GE = Position(5,1)

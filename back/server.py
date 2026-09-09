@@ -20,6 +20,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi_cache import FastAPICache
 from middlewares.ddos_middleware import DDOSMiddleware
 from models.bank import Bank
+from models.grimoire import Grimoire
 from redis import asyncio as aioredis  # type: ignore
 from utils.application_tools import load_routers
 
@@ -64,6 +65,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         base_url=f"{os.environ['API_URL']}"
     )
 
+    app.state.grimoire = await Grimoire.create()
     app.state.bank = await Bank()
     app.state.characters = await characters_endpoint.get_characters()
     app.state.pool = TaskPool()

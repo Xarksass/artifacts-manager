@@ -81,7 +81,7 @@ class Endpoint(ABC):
 
         return data['data'];
 
-    async def fetchAll(self, path:str|None = None, params: dict[str,Any]|None = None) -> list[dict[str,Any]]:
+    async def fetchAll(self, path:str|None = None, params: dict[str,Any]|None = None) -> dict[str,list[dict[str,Any]]]:
         if params is None: params = {}
         url = f'{self.endpoint}/{path}' if path is not None else self.endpoint
 
@@ -91,7 +91,7 @@ class Endpoint(ABC):
             data = await fetch_data(url, params=params)
         except HTTPStatusError as e:
             logger.warning(e)
-            return []
+            return {}
 
         assert isinstance(data, dict)
         if "error" in data:
@@ -99,9 +99,9 @@ class Endpoint(ABC):
                 logger.warning(f'{self.endpoint} - {data["error"]["message"]}')
             else:
                 logger.warning(f'{self.endpoint} - {data["error"]!s}')
-            return []
+            return {}
 
-        return data['data'];
+        return data;
 
     async def post(self, action: str, body: dict[str,Any]|list[dict[str,Any]]|None = None) -> dict[str,Any]:
         url = f'{self.endpoint}action/{action}'

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from dataclass.item import Item
 from pydantic import BaseModel
+from schemas.item import Item
 
 
 class ItemOut(BaseModel):
@@ -22,5 +22,5 @@ class ItemOut(BaseModel):
             type=i.type,
             subtype=i.subtype,
             effects=list(i.effects.keys()),
-            crafting=list(i.crafts.keys()),
+            crafting=list(i.used_in),
         )

@@ -1,8 +1,8 @@
-from typing import Any, Self, overload
+from typing import Any, overload
 
 from core.logger import get_logger
-from dataclass.item import Item
 from endpoints.items import ItemsEndpoint
+from schemas.item import Item
 
 from models.items import Items
 
@@ -14,17 +14,14 @@ class Inventory(Items):
     max_items:int
     api: ItemsEndpoint
 
-    @classmethod
-    async def create(cls, content: list[dict[str,Any]], maxi: int = 100) -> Self:
+    def __init__(self, content: list[dict[str,Any]], maxi: int = 100):
         logger.info("Character's inventory Initialisation ...")
-        self = cls()
         self.max_items = maxi
-        self.items = await Items.parse_items(ItemsEndpoint(), content)
+        self.items = Items.parse_items(ItemsEndpoint(), content)
         self.api = ItemsEndpoint()
         for item in self.items.values():
             self.total += item.quantity
         logger.info("Character's inventory Initialized")
-        return self
 
     @overload
     def pick(self, *, item:str, itemtype:None = None, subtypes:None = None, effects:None = None, skills:None = None, exclusion_mode: bool = False) -> Item | None:...

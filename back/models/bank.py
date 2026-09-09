@@ -2,9 +2,9 @@ import asyncio
 from typing import TYPE_CHECKING, Any, Self
 
 from core.logger import get_logger
-from dataclass.item import Item
 from endpoints.items import BankEndpoint, ItemsEndpoint
 from fastapi_cache import FastAPICache
+from schemas.item import Item
 
 from models.items import Items
 
@@ -30,7 +30,7 @@ class Bank(Items):
             logger.info('Bank Syncronisation ...')
             stored_items = await cls.api.get_items()
             if stored_items:
-                cls.items = await super().parse_items(ItemsEndpoint(), stored_items)
+                cls.items = super().parse_items(ItemsEndpoint(), stored_items)
             logger.info('Bank initialized ...')
         return cls.instance
 
@@ -152,7 +152,7 @@ class Bank(Items):
                 if itemtype and data.type != itemtype: continue
                 if subtypes and not data.subtype in subtypes: continue
                 if effects and not list(set(effects) & set(data.effects.keys())): continue
-                if skills and not list(set(skills) & set(data.crafts.keys())): continue
+                if skills and not (set(skills) & set(data.used_in)): continue
                 if data.quantity: return True
             return False
         else:
