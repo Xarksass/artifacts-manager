@@ -1,10 +1,10 @@
 import time
 
 from core.logger import get_logger
-from dataclass.task import Task
 from models.character import Character
 from models.inventory import Item
-from models.locations import Location, Workshop
+from models.locations import Place, Workshop
+from schemas.task import Task
 
 from roles.role import COOLDOWN, Role
 
@@ -46,7 +46,7 @@ class Cook(Role):
         return False
 
     def go_to_bank_condition(self) -> bool:
-        return (self.withdraw_raw_food_condtion() or self.store_cooked_food_condtion() or self.store_resources_condtion()) and self.character.pos != Location.BANK
+        return (self.withdraw_raw_food_condtion() or self.store_cooked_food_condtion() or self.store_resources_condtion()) and self.character.pos != Place.BANK
 
     def store_cooked_food_condtion(self) -> bool:
         return bool(self.character.inventory.pick(itemtype='consumable', subtypes=['food']))

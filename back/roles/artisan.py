@@ -1,9 +1,9 @@
 from collections.abc import Callable
 from typing import Any
 
-from dataclass.task import Task
+from schemas.task import Task
 from models.character import Character
-from models.locations import Location, Workshop
+from models.locations import Place, Workshop
 
 from .role import Role
 
@@ -62,7 +62,7 @@ class Artisan(Role):
 
     # Conditions
     def go_to_bank_condition(self) -> bool:
-        return self.withdraw_resources_condition() and self.character.pos != Location.BANK
+        return self.withdraw_resources_condition() and self.character.pos != Place.BANK
 
     def withdraw_resources_condition(self) -> bool:
         return self.bank.is_in_bank(itemtype='resource',skills=[self.current[0]])

@@ -1,12 +1,13 @@
-from dataclass.item import ResourceType
 from models.character import Character
 from models.locations import Wood
+from schemas.item import ResourceType
 
 from roles.gatherer import Gatherer
 
 
 class Lumberjack(Gatherer):
     className = 'Lumberjack'
+    skill = 'woodcutting_level'
     
     def __init__(self, Character: Character) -> None:
         self.resources = {

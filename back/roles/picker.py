@@ -1,12 +1,13 @@
-from dataclass.item import ResourceType
 from models.character import Character
 from models.locations import Plant
+from schemas.item import ResourceType
 
 from roles.gatherer import Gatherer
 
 
 class Picker(Gatherer):
     className = 'Picker'
+    skill = 'alchemy_level'
     
     def __init__(self, Character: Character) -> None:
         self.resources = {

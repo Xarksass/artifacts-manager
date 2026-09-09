@@ -1,8 +1,7 @@
-from dataclass.item import ResourceType
-from dataclass.location import Position
-from dataclass.task import Task
 from models.character import Character
-from models.locations import Location
+from models.locations import Place
+from schemas.item import ResourceType
+from schemas.task import Task
 
 from roles.role import Role
 
@@ -11,7 +10,7 @@ class Gatherer(Role):
     className = 'Gatherer'
     resources: dict[str,ResourceType]
     current: ResourceType
-    workshop: Position
+    skill: str
 
     def __init__(self, Character: Character) -> None:
         self.tasks = [
@@ -33,7 +32,7 @@ class Gatherer(Role):
     def _get_next_valid_resource(self) -> ResourceType:
         try:
             next_resource = next(self.resources_iterable)
-            if not next_resource.required(self.character.skills.mining):
+            if not next_resource.required(getattr(self.character.skills, self.skill)):
                 next_resource = self._reset_resource_iterable()
         except StopIteration:
             next_resource = self._reset_resource_iterable()
@@ -53,7 +52,7 @@ class Gatherer(Role):
         return not self._threshold_reached()
     
     def go_to_bank_condition(self) -> bool:
-        return self.store_resources_condition() and self.character.pos != Location.BANK
+        return self.store_resources_condition() and self.character.pos != Place.BANK
     
     def store_resources_condition(self) -> bool:
         #return bool(self.character.inventory.pick(itemtype='resource', subtypes=['bar'])) or self.character.inventory.is_full()

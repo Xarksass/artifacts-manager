@@ -4,11 +4,11 @@ from typing import TYPE_CHECKING
 
 from core.logger import get_logger
 from core.selector import Selector
-from dataclass.task import Task
 from models.bank import Bank
 
 #from models.inventory import Inventory
-from models.locations import Location, Position
+from models.locations import Place, Position
+from schemas.task import Task
 
 if TYPE_CHECKING:
     from models.character import Character  # noqa: TC004
@@ -35,7 +35,7 @@ class Role:
 
     # Actions
     async def go_to_bank(self) -> tuple[bool,bool]:
-        return await self.go_to(Location.BANK)
+        return await self.go_to(Place.BANK)
 
     # Class Methods
     def set_task_cooldown(self, task:str):

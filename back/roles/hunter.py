@@ -1,7 +1,7 @@
 from core.logger import get_logger
-from dataclass.task import Task
 from models.character import Character
-from models.locations import Location, Monster
+from models.locations import Monster, Place
+from schemas.task import Task
 
 from roles.role import Role
 
@@ -39,8 +39,8 @@ class Hunter(Role):
         logger.debug('--- go_to_bank_condition ---')
         logger.debug(f"self.withdraw_heal_item_condition() = {self.withdraw_heal_item_condition()}")
         logger.debug(f"self.store_resources_condition() = {self.store_resources_condition()}")
-        logger.debug(f"self.character.pos != Location.BANK = {self.character.pos != Location.BANK}")
-        return (self.withdraw_heal_item_condition() or self.store_resources_condition()) and self.character.pos != Location.BANK
+        logger.debug(f"self.character.pos != Place.BANK = {self.character.pos != Place.BANK}")
+        return (self.withdraw_heal_item_condition() or self.store_resources_condition()) and self.character.pos != Place.BANK
     
     def find_chicken_condition(self) -> bool:
         logger.debug('--- find_chicken_condition ---')
