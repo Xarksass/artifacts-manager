@@ -1,10 +1,10 @@
 import asyncio
 from typing import TYPE_CHECKING
 
-from dataclass.task import Task
 from dto.bank import BankOut
 from dto.inventory import InventoryOut
 from models.bank import Bank
+from schemas.task import Task
 
 from core.logger import get_logger
 from core.ws_manager import manager
