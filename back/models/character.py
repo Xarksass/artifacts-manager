@@ -1,38 +1,27 @@
 import asyncio
 from collections import deque
 from collections.abc import Callable
-from typing import Any, Self
+from dataclasses import fields
+from typing import Any
 
 from core.ws_manager import manager
-from dataclass.character import Skills
-from dataclass.item import Item, Recipe
 from endpoints.character import CharacterEndpoint
 from endpoints.endpoint import Cooldown
 from endpoints.maps import MapsEndpoint
-
-#from cli.window.character import CharacterWindow
 from endpoints.monsters import MonstersEndpoint
 
 #from endpoints.monsters import MonstersEndpoint
 from roles.role import Role
+from schemas.entity import CharacterSchema
+from schemas.item import Item, Recipe
+from utils.dataclass_tools import diff_and_update
 
 from models.inventory import Inventory
 from models.locations import Position
 
 
-class Character:
-    name: str
-    level: int
-    gold: int
-    hp: int
-    max_hp: int
-    xp: int
-    max_xp: int
-    layer: str
-    skin: str
-    pos: Position
+class Character(CharacterSchema):
     inventory: Inventory
-    skills: Skills
     role: Role
     api: CharacterEndpoint
     _next_ready_at: float | None # deadline absolue (loop.time())
@@ -40,19 +29,15 @@ class Character:
     __logs: deque[str]
     #__window: CharacterWindow
 
-    @classmethod
-    async def create(cls, attributes:dict[str,Any], pos:tuple[int,int], skills: dict[str,int], inventory: list[dict[str,Any]]) -> Self:
-        self = cls()
-        for attribute, value in attributes.items():
-            setattr(self, attribute, value)
-        self.pos = Position(*pos)
-        self.inventory = await Inventory.create(inventory)
-        self.skills = Skills(**skills)
+    def __init__(self, schema: CharacterSchema, inventory: Inventory):
+        for f in fields(schema):
+            setattr(self, f.name, getattr(schema, f.name))
+
+        self.inventory = inventory
         self.api = CharacterEndpoint(self)
         self.role = Role(self)
         self._next_ready_at = None
         self.__logs = deque([])
-        return self
 
     """ @property
     def window(self) -> CharacterWindow:
@@ -74,10 +59,14 @@ class Character:
     def cooldown(self, cd: Cooldown) -> None:
         self.__cooldown = cd
         self._next_ready_at = asyncio.get_running_loop().time() + cd.remaining
-        #if cd.remaining:
-        #    asyncio.create_task(self.window.run_cooldown(asyncio.Event()))
 
     # Methods
+    def sync_from_api(self, json: dict[str,Any]) -> bool:
+        incoming = CharacterSchema.from_json(json)  # ta logique de parsing existante
+        changed_fields = diff_and_update(self, incoming)
+        self.last_changed_fields = changed_fields  # optionnel, utile pour du debug/log
+        return bool(changed_fields)
+    
     async def log(self, entry: str) -> None:
         self.__logs.append(entry)
         await manager.broadcast({
@@ -254,4 +243,4 @@ class Character:
         return []
 
     def __repr__(self) -> str:
-        return f'{self.name}({self.role.className}:{self.level}) [❤️ {self.hp}/{self.max_hp}]'
+        return f'{self.name}({self.level}) [❤️ {self.hp}/{self.max_hp}]'

@@ -2,8 +2,13 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Any
 
-from dataclass.location import Position
+from schemas.location import Position
 
+
+@dataclass
+class Effect:
+    code: str
+    value: int
 
 @dataclass
 class BaseItem:
@@ -36,7 +41,8 @@ class Item:
     subtype: str
     conditions: list[dict[str,Any]]
     effects: dict[str,Any]
-    crafts: dict[str,list[Recipe]]
+    used_in: set[str]
     tradeable: bool
     recyclable: bool
-    quantity: int
+    recipe: Recipe|None = None
+    quantity: int = 0

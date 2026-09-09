@@ -5,6 +5,7 @@ from dataclasses import dataclass
 class Position:
     x: int
     y: int
+    layer: str = 'overworld'
 
 @dataclass
 class MapContent:

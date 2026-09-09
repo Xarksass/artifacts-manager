@@ -4,14 +4,13 @@ from typing import TYPE_CHECKING, Any
 
 from core.logger import get_logger
 from core.ws_manager import manager
-from dataclass.character import SKILLS
 from dto.character import CharacterOut
 from fastapi_cache import FastAPICache
 
 from endpoints.endpoint import Endpoint
 
 if TYPE_CHECKING:
-    from models.character import Character
+    from models.character import Character  # noqa: TC004
 
 logger = get_logger(__name__,'character_endpoint')
 
@@ -42,34 +41,14 @@ class CharacterEndpoint(Endpoint):
         if 'data' in response:
             await FastAPICache.clear(namespace=self._cache_namespace)
             dt = response['data']
-            ch = None
+            ch: dict[str,Any]|None = None
             if 'character' in dt:
                 ch = dt['character']
             elif 'characters' in dt:
                 ch = dt['characters'][0]
+
             if ch is not None:
-                cu = False
-
-                if self.character.level != ch['level']:
-                    cu = True
-                    await self.character.log(f'Level Up! {self.character.level} -> {ch['level']}')
-                    self.character.level = ch['level']
-                    self.character.max_xp = ch['max_xp']
-
-                if self.character.xp != ch['xp']:
-                    cu = True
-                    self.character.xp = ch['xp']
-
-                if self.character.hp != ch['hp']:
-                    cu = True
-                    self.character.hp = ch['hp']
-
-                if self.character.max_hp != ch['max_hp']:
-                    cu = True
-                    self.character.max_hp = ch['max_hp']
-
-                if self.character.inventory.max_items != ch['inventory_max_items']:
-                    self.character.inventory.max_items = ch['inventory_max_items']
+                cu = self.character.sync_from_api(ch)
 
                 if cu:
                     logger.debug('trying to broadcast from endpoint')
@@ -79,10 +58,6 @@ class CharacterEndpoint(Endpoint):
                         "name": self.character.name,
                         "data": CharacterOut.from_character(self.character).model_dump(mode="json"),
                     })
-
-                for k, skill in SKILLS.items():
-                    logger.debug(f'{skill}: {k} {ch[k]}')
-                    if getattr(self.character.skills, skill) != ch[k]: setattr(self.character.skills, skill, ch[k])
 
             logger.debug('return dt')
             return dt
