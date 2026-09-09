@@ -16,6 +16,7 @@ from schemas.entity import CharacterSchema
 from schemas.item import Item, Recipe
 from utils.dataclass_tools import diff_and_update
 
+from models.grimoire import Grimoire
 from models.inventory import Inventory
 from models.locations import Position
 
@@ -93,17 +94,19 @@ class Character(CharacterSchema):
                 break;
         return passed
 
-    def select_best_heal_item(self, items: dict[str,Item]) -> tuple[Item|None,int]:
+    def select_best_heal_item(self, items: dict[str,int]) -> tuple[Item|None,int]:
+        _grimoire = Grimoire.open()
         min_diff = self.max_hp - self.hp
         to_heal = self.max_hp - self.hp
         to_use = None
 
-        for item in items.values():
-            if not self.is_item_usable(item): continue;
-            diff = to_heal - item.effects['heal']
+        for item in items:
+            item_data = _grimoire.get(item)
+            if not self.is_item_usable(item_data): continue;
+            diff = to_heal - item_data.effects['heal']
             if abs(diff) < min_diff:
                 min_diff = diff
-                to_use = item
+                to_use = item_data
         return to_use, max(0, min_diff)
 
     def craftable(self, skill:str, recipe: Recipe) -> int:
@@ -113,9 +116,9 @@ class Character(CharacterSchema):
         count = None
         for code, quantity in recipe.items.items():
             in_bag = self.inventory.pick(item=code)
-            if not in_bag or in_bag.quantity < quantity:
+            if not in_bag or in_bag < quantity:
                 return 0
-            available = in_bag.quantity // quantity
+            available = in_bag // quantity
             count = available if count is None else min(count, available)
 
         assert count is not None

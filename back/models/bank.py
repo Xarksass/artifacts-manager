@@ -6,6 +6,7 @@ from endpoints.items import BankEndpoint, ItemsEndpoint
 from fastapi_cache import FastAPICache
 from schemas.item import Item
 
+from models.grimoire import Grimoire
 from models.items import Items
 
 if TYPE_CHECKING:
@@ -14,14 +15,24 @@ if TYPE_CHECKING:
 logger = get_logger(__name__,'bank')
 
 class Bank(Items):
-    instance: Self|None = None
-    items: dict[str,Item]
+    instance: Self | None = None
+    _ready: bool = False
+
+    items: dict[str,int]
     total: int = 0
     api: BankEndpoint
     access_loc: asyncio.Lock
 
-    async def __new__(cls) -> Self:
+    def __new__(cls) -> Self:
         if cls.instance is None:
+            cls.instance = super().__new__(cls)
+        return cls.instance
+
+    @classmethod
+    async def create(cls) -> Self:
+        """À appeler une seule fois, au démarrage de l'app."""
+        self = cls()  # __new__ synchrone, crée ou récupère l'instance
+        if not cls._ready:
             logger.info('Bank Initialisation ...')
             cls.instance = super().__new__(cls)
             cls.api = BankEndpoint()
@@ -32,6 +43,13 @@ class Bank(Items):
             if stored_items:
                 cls.items = super().parse_items(ItemsEndpoint(), stored_items)
             logger.info('Bank initialized ...')
+        return self
+
+    @classmethod
+    def open(cls) -> Self:
+        """Accès synchrone, à utiliser partout ailleurs une fois `create()` passé."""
+        if cls.instance is None or not cls._ready:
+            raise RuntimeError("Bank.create() doit être awaité avant tout accès")
         return cls.instance
 
     # TODO: Check if the bank is full (no slot available), if it happens, chekc gold and try to by expansion
@@ -86,28 +104,28 @@ class Bank(Items):
 
                     if item is not None:
                         matched_item = super().get(cls.items, item=item)
-                        assert matched_item is not None
 
-                        if quantity > 0:
-                            asked_quantity = min(quantity, matched_item.quantity)
-                        else:
-                            asked_quantity = matched_item.quantity
-                        withdraw_quantity = min(asked_quantity, character.inventory.max_items - character.inventory.total)
+                        if matched_item:
+                            if quantity > 0:
+                                asked_quantity = min(quantity, matched_item)
+                            else:
+                                asked_quantity = matched_item
+                            withdraw_quantity = min(asked_quantity, character.inventory.max_items - character.inventory.total)
 
-                        response = await cls.withdraw(character, item=matched_item, quantity=withdraw_quantity)
-                        if response and not success: success = True
+                            response = await cls.withdraw(character, item=item, quantity=withdraw_quantity)
+                            if response and not success: success = True
                     else:
                         matching_items = super().get(cls.items, itemtype=itemtype, subtypes=subtypes, effects=effects, skills=skills)
                         assert matching_items is not None
 
-                        asked_items: list[dict[str,str|int]] = []
-                        for matched_item in matching_items.values():
+                        asked_items: list[dict[str,Any]] = []
+                        for code, matched_item in matching_items.items():
                             if quantity > 0:
-                                asked_quantity = min(quantity, matched_item.quantity)
+                                asked_quantity = min(quantity, matched_item)
                             else:
-                                asked_quantity = matched_item.quantity
+                                asked_quantity = matched_item
                             withdraw_quantity = min(asked_quantity, character.inventory.max_items - character.inventory.total)
-                            asked_items.append({"code": matched_item.code, "quantity": withdraw_quantity})
+                            asked_items.append({"code": code, "quantity": withdraw_quantity})
 
                         if len(asked_items):
                             response = await cls.withdraw(character, items=asked_items)
@@ -118,25 +136,27 @@ class Bank(Items):
             """ else:
                 await asyncio.sleep(0.25) """
 
-
     @classmethod
-    async def withdraw(cls, character: Character, *, item:Item|None = None, quantity: int|None = None, items: list[dict[str,str|int]]|None = None) -> dict[str,Any]:
+    async def withdraw(cls, character: Character, *, item:str|None = None, quantity: int|None = None, items: list[dict[str,Any]]|None = None) -> dict[str,Any]:
+        _grimoire = Grimoire.open()
         if item and quantity:
-            await character.log(f"⏳ withdraw {quantity} {item.name} from the bank...")
-            response = await character.api.withdraw(item=item.code, quantity=quantity)
+            item_data = _grimoire.get(item)
+            await character.log(f"⏳ withdraw {quantity} {item_data.name} from the bank...")
+            response = await character.api.withdraw(item=item_data.code, quantity=quantity)
             if response:
-                await character.inventory.add(item.code, quantity)
-                await cls.remove(item.code, quantity)
-                await character.log(f"🏦 withdrawn {quantity} {item.name} from the bank")
+                await character.inventory.add(item_data.code, quantity)
+                await cls.remove(item_data.code, quantity)
+                await character.log(f"🏦 withdrawn {quantity} {item_data.name} from the bank")
         elif items is not None and len(items):
             logger.debug(f'Trying to withdraw {items!s}')
             await character.log("⏳ withdraw multiple items from the bank...")
             response = await character.api.withdraw(items=items)
             if response:
                 for wi in items:
-                    withdrawn = await character.inventory.add(wi['code'], wi['quantity']) # type: ignore
+                    withdrawn_data = _grimoire.get(wi['code'])
+                    await character.inventory.add(wi['code'], wi['quantity']) # type: ignore
                     await cls.remove(wi['code'], wi['quantity']) # type: ignore
-                    wi['name'] = withdrawn.name if isinstance(withdrawn, Item) else wi['code']
+                    wi['name'] = withdrawn_data.name
                 w_items_str = ", ".join([f"{d['quantity']}x {d['name']}" for d in items])
                 await character.log(f"🏦 {w_items_str} withdrawn from the bank")
         else:
@@ -145,20 +165,22 @@ class Bank(Items):
 
     @classmethod
     def is_in_bank(cls, *, item:str|None = None, itemtype:str|None = None, subtypes:list[str]|None = None, effects:list[str]|None = None, skills:list[str]|None = None) -> bool:
+        _grimoire: Grimoire = Grimoire.open()
+        
         if item:
             return bool(cls.items.get(item, None))
         elif itemtype or subtypes or effects or skills:
-            for data in cls.items.values():
+            for code, quantity in cls.items.items():
+                data = _grimoire.get(code)
                 if itemtype and data.type != itemtype: continue
                 if subtypes and not data.subtype in subtypes: continue
                 if effects and not list(set(effects) & set(data.effects.keys())): continue
                 if skills and not (set(skills) & set(data.used_in)): continue
-                if data.quantity: return True
+                if quantity: return True
             return False
         else:
             return bool(len(cls.items))
-
-        
+   
     @classmethod
     async def add(cls, item:str, quantity:int):
         cls.total += quantity

@@ -22,7 +22,7 @@ class Selector:
         self.__stop = stop
 
     async def tick(self) -> bool:
-        self.bank = await Bank()
+        self.bank = Bank.open()
 
         if not self.priority_tasks.empty():
             task = self.priority_tasks.get_nowait()

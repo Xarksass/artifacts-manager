@@ -11,7 +11,6 @@ import httpx
 import uvicorn
 from core.cache_backend import LoggingRedisBackend
 from core.http import close_client, init_client
-from core.logger import get_logger
 from core.task_pool import TaskPool
 from dotenv import load_dotenv
 from endpoints.characters import CharactersEndpoint
@@ -23,8 +22,6 @@ from models.bank import Bank
 from models.grimoire import Grimoire
 from redis import asyncio as aioredis  # type: ignore
 from utils.application_tools import load_routers
-
-logger = get_logger(__name__,'main')
 
 characters_endpoint = CharactersEndpoint()
 
@@ -55,9 +52,7 @@ def request_key_builder(
 async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
     # === Initialisation du cache
     redis = aioredis.from_url(f"redis://{os.getenv('CACHE_HOST','localhost')}", password=os.environ['REDIS_PASSWORD']) # type: ignore
-
     app.state.redis = redis
-
     FastAPICache.init(LoggingRedisBackend(redis), prefix="fastapi-cache", key_builder=request_key_builder)
 
     init_client(
@@ -65,8 +60,9 @@ async def lifespan(app: FastAPI) -> AsyncGenerator[None]:
         base_url=f"{os.environ['API_URL']}"
     )
 
+    # === Initialisation des données générales
     app.state.grimoire = await Grimoire.create()
-    app.state.bank = await Bank()
+    app.state.bank = await Bank.create()
     app.state.characters = await characters_endpoint.get_characters()
     app.state.pool = TaskPool()
 
@@ -80,14 +76,13 @@ app.mount('/public', staticfiles.StaticFiles(directory='static'))
 app.add_middleware(DDOSMiddleware)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[os.getenv('VITE_URL',"http://localhost:5173")],  # l'origine de ton dev server Vite
+    allow_origins=[os.getenv('VITE_URL',"http://localhost:5173")],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 load_routers(app, controllers)
 
 if __name__ == "__main__":
-    #curses.wrapper(lambda screen: asyncio.run(main(screen)))
     uvicorn.run(
         'server:app',
         host = os.getenv('UVICORN_HOST', '127.0.0.1'),

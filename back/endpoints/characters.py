@@ -1,5 +1,4 @@
 from datetime import UTC, datetime
-from enum import Enum, auto
 
 from core.logger import get_logger
 from core.ws_manager import manager
@@ -12,10 +11,6 @@ from endpoints.endpoint import Endpoint
 
 logger = get_logger(__name__,'characters')
 
-class Role(Enum):
-    HUNTER = auto()
-    COOK = auto()
-
 class CharactersEndpoint(Endpoint):
     def __init__(self) -> None:
         self.endpoint = 'my/characters'
@@ -24,29 +19,32 @@ class CharactersEndpoint(Endpoint):
         super().__init__()
 
     async def get_characters(self) -> dict[str,Character]:
-        logger.info("Characters' list Initialisation ...")
+        logger.info("Characters list Initialisation ...")
         characters: dict[str,Character] = {}
         response = await self.fetchAll()
 
         if response:
             for data in response['data']:
-                attributes: CharacterSchema = CharacterSchema.from_json(data)
+                schema: CharacterSchema = CharacterSchema.from_json(data)
                 inventory = Inventory([item for item in data['inventory'] if item['code']])
-                logger.info('Character Initialisation ...')
-                ch = Character(attributes, inventory)
+
+                logger.info(f'{schema.name} Character Initialisation ...')
+                character = Character(schema, inventory)
+
                 if datetime.fromisoformat(data['cooldown_expiration']) > datetime.now(UTC):
                     remaining = datetime.fromisoformat(data['cooldown_expiration']) - datetime.now(UTC)
-                    ch.cooldown = Cooldown(
+                    character.cooldown = Cooldown(
                         remaining.seconds,
                         data['cooldown_expiration'],
                     )
                     await manager.broadcast({
                         'type': 'cooldown_update',
-                        'name': ch.name,
+                        'name': character.name,
                         'data': remaining.seconds
                     })
-                characters[ch.name] = ch
-                logger.info('Character Initialized ...')
 
-        logger.info("Characters' list Initialized")
+                characters[character.name] = character
+                logger.info(f'Character {character.name} Initialized ...')
+
+        logger.info("Characters list Initialized")
         return characters

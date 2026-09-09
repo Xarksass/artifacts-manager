@@ -45,4 +45,3 @@ class Item:
     tradeable: bool
     recyclable: bool
     recipe: Recipe|None = None
-    quantity: int = 0

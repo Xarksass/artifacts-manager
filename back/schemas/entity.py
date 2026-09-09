@@ -6,14 +6,14 @@ from typing import Any
 from schemas.location import Position
 
 SKILLS = {
-"mining_level",
-"woodcutting_level",
-"fishing_level",
-"weaponcrafting_level",
-"gearcrafting_level",
-"jewelrycrafting_level",
-"cooking_level",
-"alchemy_level",
+    "mining_level",
+    "woodcutting_level",
+    "fishing_level",
+    "weaponcrafting_level",
+    "gearcrafting_level",
+    "jewelrycrafting_level",
+    "cooking_level",
+    "alchemy_level",
 }
 
 @dataclass

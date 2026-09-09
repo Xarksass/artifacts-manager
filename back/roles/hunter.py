@@ -13,12 +13,12 @@ class Hunter(Role):
     
     def __init__(self, Character: Character) -> None:
         self.tasks = [
-            Task('go_to_bank', self.go_to_bank_condition, self.go_to_bank),
-            Task('withdraw_heal_item', self.withdraw_heal_item_condition, self.withdraw_heal_item),
-            Task('heal', self.heal_condition, self.heal),
-            Task('find_chicken', self.find_chicken_condition, self.find_chicken),
-            Task('kill_chicken', self.kill_chicken_condition, self.kill_chicken),
-            Task('store_resources', self.store_resources_condition, self.store_resources),
+            Task('Go to Bank', 'go_to_bank', self.go_to_bank_condition, self.go_to_bank),
+            Task('Withdraw heal item', 'withdraw_heal_item', self.withdraw_heal_item_condition, self.withdraw_heal_item),
+            Task('Heal', 'heal', self.heal_condition, self.heal),
+            Task('Find monster', 'find_chicken', self.find_chicken_condition, self.find_chicken),
+            Task('Kill monster', 'kill_chicken', self.kill_chicken_condition, self.kill_chicken),
+            Task('Store resources', 'store_resources', self.store_resources_condition, self.store_resources),
         ]
         super().__init__(Character)
 
@@ -56,7 +56,7 @@ class Hunter(Role):
         
         resources = self.character.inventory.pick(itemtype='resource')
         if resources:
-            total = sum([r.quantity for r in resources.values()])
+            total = sum([quantity for quantity in resources.values()])
             logger.debug(f"resources < 20 = {total < 20}")
             return total < 20
         return True
@@ -81,7 +81,7 @@ class Hunter(Role):
             return True
 
         if resources:
-            total = sum([r.quantity for r in resources.values()])
+            total = sum([quantity for quantity in resources.values()])
             logger.debug(f"resources >= 20 = {total >= 20}")
             return total >= 20
         return False
@@ -103,8 +103,8 @@ class Hunter(Role):
         resources = self.character.inventory.pick(itemtype='resource')
         if resources:
             to_store: list[dict[str,str|int]] = []
-            for resource in resources.values():
-                to_store.append({'code': resource.code, 'quantity': resource.quantity})
+            for code, quantity in resources.items():
+                to_store.append({'code': code, 'quantity': quantity})
 
             await self.bank.deposit(self.character, items=to_store)
             return True, True

@@ -2,7 +2,6 @@ from typing import Any, overload
 
 from core.logger import get_logger
 from endpoints.items import ItemsEndpoint
-from schemas.item import Item
 
 from models.items import Items
 
@@ -17,17 +16,17 @@ class Inventory(Items):
     def __init__(self, content: list[dict[str,Any]], maxi: int = 100):
         logger.info("Character's inventory Initialisation ...")
         self.max_items = maxi
-        self.items = Items.parse_items(ItemsEndpoint(), content)
         self.api = ItemsEndpoint()
-        for item in self.items.values():
-            self.total += item.quantity
+        self.items = Items.parse_items(self.api, content)
+        for quantity in self.items.values():
+            self.total += quantity
         logger.info("Character's inventory Initialized")
 
     @overload
-    def pick(self, *, item:str, itemtype:None = None, subtypes:None = None, effects:None = None, skills:None = None, exclusion_mode: bool = False) -> Item | None:...
+    def pick(self, *, item:str, itemtype:None = None, subtypes:None = None, effects:None = None, skills:None = None, exclusion_mode: bool = False) -> int | None:...
     @overload
-    def pick(self, *, item:None = None, itemtype:str|None = None, subtypes:list[str]|None = None, effects:list[str]|None = None, skills:list[str]|None = None, exclusion_mode: bool = False) -> dict[str, Item]:...
-    def pick(self, *, item: str | None = None, itemtype: str | None = None, subtypes: list[str] | None = None, effects: list[str] | None = None, skills: list[str] | None = None, exclusion_mode: bool = False) -> dict[str, Item] | Item | None:
+    def pick(self, *, item:None = None, itemtype:str|None = None, subtypes:list[str]|None = None, effects:list[str]|None = None, skills:list[str]|None = None, exclusion_mode: bool = False) -> dict[str, int]:...
+    def pick(self, *, item: str | None = None, itemtype: str | None = None, subtypes: list[str] | None = None, effects: list[str] | None = None, skills: list[str] | None = None, exclusion_mode: bool = False) -> dict[str, int] | int | None:
         if item is not None:
             return super().get(self.items, item=item, exclusion_mode=exclusion_mode)
         else:

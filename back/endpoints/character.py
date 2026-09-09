@@ -40,8 +40,10 @@ class CharacterEndpoint(Endpoint):
         logger.debug('parse data')
         if 'data' in response:
             await FastAPICache.clear(namespace=self._cache_namespace)
+
             dt = response['data']
             ch: dict[str,Any]|None = None
+            
             if 'character' in dt:
                 ch = dt['character']
             elif 'characters' in dt:
@@ -59,10 +61,10 @@ class CharacterEndpoint(Endpoint):
                         "data": CharacterOut.from_character(self.character).model_dump(mode="json"),
                     })
 
-            logger.debug('return dt')
+            logger.debug('return data')
             return dt
 
-        logger.debug('return reponse')
+        logger.debug('no data')
         return response
 
     async def move(self, x:int, y:int) -> dict[str,Any]:

@@ -12,8 +12,10 @@ class ItemsEndpoint(Endpoint):
         return await self.fetch(code)
 
     async def getAll(self) -> list[dict[str,Any]]:
+        # get total available data
         result = await self.fetchAll(params={'size': 1})
         if result:
+            # retrieve total available data
             result = await self.fetchAll(params={'size': result['total']})
         return [] if not result else result['data']
 

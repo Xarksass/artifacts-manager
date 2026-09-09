@@ -2,7 +2,7 @@ import time
 
 from core.logger import get_logger
 from models.character import Character
-from models.inventory import Item
+from models.grimoire import Grimoire
 from models.locations import Place, Workshop
 from schemas.task import Task
 
@@ -16,12 +16,12 @@ class Cook(Role):
     
     def __init__(self, Character: Character) -> None:
         self.tasks = [
-            Task('go_to_cooking', self.go_to_cooking_condition, self.go_to_cooking),
-            Task('cooking', self.cooking_condition, self.cooking),
-            Task('go_to_bank', self.go_to_bank_condition, self.go_to_bank),
-            Task('store_cooked_food', self.store_cooked_food_condtion, self.store_cooked_food),
-            Task('store_resources', self.store_resources_condtion, self.store_resources),
-            Task('withdraw_raw_food', self.withdraw_raw_food_condtion, self.withdraw_raw_food),
+            Task('Go to cooking station', 'go_to_cooking', self.go_to_cooking_condition, self.go_to_cooking),
+            Task('Cook food', 'cooking', self.cooking_condition, self.cooking),
+            Task('Go to bank', 'go_to_bank', self.go_to_bank_condition, self.go_to_bank),
+            Task('Store cooked food', 'store_cooked_food', self.store_cooked_food_condtion, self.store_cooked_food),
+            Task('Store resources', 'store_resources', self.store_resources_condtion, self.store_resources),
+            Task('Withdraw raw food', 'withdraw_raw_food', self.withdraw_raw_food_condtion, self.withdraw_raw_food),
         ]
         super().__init__(Character)
 
@@ -41,7 +41,7 @@ class Cook(Role):
         if raw_food:
             total_quantity = 0
             for rf in raw_food.values():
-                total_quantity += rf.quantity
+                total_quantity += rf
             return total_quantity >= 20
         return False
 
@@ -70,17 +70,20 @@ class Cook(Role):
 
     async def cooking(self) -> tuple[bool,bool]:
         logger.debug('cooking...')
-        raw_food: dict[str,Item]|None = self.character.inventory.pick(itemtype='resource', skills=['cooking'])
+        raw_food: dict[str,int]|None = self.character.inventory.pick(itemtype='resource', skills=['cooking'])
         crafted = 0
         if raw_food:
-            for ingredient in raw_food.values():
-                for recipe in ingredient.crafts['cooking']:
-                    craftable = self.character.craftable('cooking',recipe)
-                    if not craftable: continue;
-                    success = await self.character.craft(recipe,craftable)
-                    if success:
-                        crafted = craftable
-                        break
+            _grimoire = Grimoire.open()
+            for ingredient in raw_food:
+                cooking_recipes = _grimoire.recipes.get('cooking', [])
+                for recipe in cooking_recipes:
+                    if ingredient in recipe.items:
+                        craftable = self.character.craftable('cooking',recipe)
+                        if not craftable: continue;
+                        success = await self.character.craft(recipe,craftable)
+                        if success:
+                            crafted = craftable
+                            break
                 if crafted: break
             return True, False
         if crafted == 0:
@@ -92,22 +95,22 @@ class Cook(Role):
         return True, True
 
     async def store_cooked_food(self) -> tuple[bool,bool]:
-        cooked_food: dict[str,Item]|None = self.character.inventory.pick(itemtype='consumable',subtypes=['food'])
+        cooked_food: dict[str,int]|None = self.character.inventory.pick(itemtype='consumable',subtypes=['food'])
         if cooked_food:
             to_store: list[dict[str,str|int]] = []
-            for food in cooked_food.values():
-                to_store.append({'code': food.code, 'quantity': food.quantity})
+            for code, quantity in cooked_food.items():
+                to_store.append({'code': code, 'quantity': quantity})
 
             await self.bank.deposit(self.character, items=to_store)
             return True, True
         return False, False
 
     async def store_resources(self) -> tuple[bool,bool]:
-        resources: dict[str,Item]|None = self.character.inventory.pick(itemtype='resource', skills=['cooking'], exclusion_mode=True)
+        resources: dict[str,int]|None = self.character.inventory.pick(itemtype='resource', skills=['cooking'], exclusion_mode=True)
         if resources:
             to_store: list[dict[str,str|int]] = []
-            for resource in resources.values():
-                to_store.append({'code': resource.code, 'quantity': resource.quantity})
+            for code, quantity in resources.items():
+                to_store.append({'code': code, 'quantity': quantity})
 
             await self.bank.deposit(self.character, items=to_store)
             return True, True

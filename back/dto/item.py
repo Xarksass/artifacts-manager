@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+from models.grimoire import Grimoire
 from pydantic import BaseModel
-from schemas.item import Item
 
 
 class ItemOut(BaseModel):
@@ -14,13 +14,15 @@ class ItemOut(BaseModel):
     crafting: list[str]
 
     @staticmethod
-    def from_item(i: Item) -> ItemOut:
+    def from_code(code: str, quantity: int) -> ItemOut:
+        _grimoire = Grimoire.open()
+        item_data = _grimoire.get(code)
         return ItemOut(
-            name=i.name,
-            code=i.code,
-            quantity=i.quantity,
-            type=i.type,
-            subtype=i.subtype,
-            effects=list(i.effects.keys()),
-            crafting=list(i.used_in),
+            name=item_data.name,
+            code=item_data.code,
+            quantity=quantity,
+            type=item_data.type,
+            subtype=item_data.subtype,
+            effects=list(item_data.effects.keys()),
+            crafting=list(item_data.used_in),
         )

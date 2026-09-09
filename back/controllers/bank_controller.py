@@ -5,8 +5,6 @@ from fastapi import (
     APIRouter,
     Request,
 )
-
-#from fastapi.responses import StreamingResponse
 from fastapi_cache.decorator import cache
 from starlette.status import *  # type: ignore[reportWildcardImportFromLibrary]
 

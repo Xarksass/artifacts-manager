@@ -9,4 +9,4 @@ from dto.item import ItemOut
 class BankOut(BaseModel):
     @staticmethod
     def from_bank(b: Bank) -> list[dict[str, Any]]:
-        return [ItemOut.from_item(bi).model_dump(mode='json') for bi in b.items.values()]
+        return [ItemOut.from_code(c,q).model_dump(mode='json') for c,q in b.items.items()]

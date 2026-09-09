@@ -14,10 +14,10 @@ class Gatherer(Role):
 
     def __init__(self, Character: Character) -> None:
         self.tasks = [
-            Task('go_to_resource', self.go_to_resource_condition, self.go_to_resource),
-            Task('gather_resource', self.gather_resource_condition, self.gather_resource),
-            Task('go_to_bank', self.go_to_bank_condition, self.go_to_bank),
-            Task('store_resources', self.store_resources_condition, self.store_resources),
+            Task('Go to resource', 'go_to_resource', self.go_to_resource_condition, self.go_to_resource),
+            Task('Gather resources', 'gather_resource', self.gather_resource_condition, self.gather_resource),
+            Task('Go to bank', 'go_to_bank', self.go_to_bank_condition, self.go_to_bank),
+            Task('Store resources', 'store_resources', self.store_resources_condition, self.store_resources),
         ]
 
         super().__init__(Character)
@@ -77,8 +77,8 @@ class Gatherer(Role):
         resources = self.character.inventory.pick(itemtype='resource')
         if resources:
             to_store: list[dict[str,str|int]] = []
-            for resource in resources.values():
-                to_store.append({'code': resource.code, 'quantity': resource.quantity})
+            for code, quantity in resources.items():
+                to_store.append({'code': code, 'quantity': quantity})
 
             success = await self.bank.deposit(self.character, items=to_store)
             if success:

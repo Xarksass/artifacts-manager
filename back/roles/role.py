@@ -51,7 +51,7 @@ class Role:
 
     async def routine(self, stop_event: asyncio.Event) -> None:
         logger.info(f'Starting {self.className} routine for {self.character.name}')
-        self.bank = await Bank()
+        self.bank = Bank.open()
         loop = asyncio.get_running_loop()
 
         while not stop_event.is_set():

@@ -29,11 +29,11 @@ class Grimoire:
         """À appeler une seule fois, au démarrage de l'app."""
         self = cls()  # __new__ synchrone, crée ou récupère l'instance
         if not cls._ready:
+            logger.info('Grimoire Initialisation ...')
             cls.items_api = ItemsEndpoint()
             cls.items = {}
             cls.recipes = {}
             items_data = await cls.items_api.getAll()
-            logger.debug(f'len(items_data) = {len(items_data)}')
             if items_data:
                 cls.parse_items(items_data)
 
@@ -43,15 +43,20 @@ class Grimoire:
             if monsters_data:
                 cls.parse_monsters(monsters_data)
 
+            logger.info('Grimoire initialized ...')
             cls._ready = True
         return self
 
     @classmethod
-    def get(cls) -> Self:
+    def open(cls) -> Self:
         """Accès synchrone, à utiliser partout ailleurs une fois `create()` passé."""
         if cls.instance is None or not cls._ready:
             raise RuntimeError("Grimoire.create() doit être awaité avant tout accès")
         return cls.instance
+
+    @classmethod
+    def get(cls, code: str) -> Item:
+        return cls.items[code]
 
     @classmethod
     def parse_items(cls, items: list[dict[str,Any]]) -> None:

@@ -16,5 +16,5 @@ class InventoryOut(BaseModel):
         return InventoryOut(
             total=inv.total,
             max=inv.max_items,
-            items=[ItemOut.from_item(i) for i in inv.items.values()]
+            items=[ItemOut.from_code(c,q) for c,q in inv.items.items()]
         )

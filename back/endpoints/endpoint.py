@@ -1,11 +1,8 @@
 from __future__ import annotations
 
-#import json
 from abc import ABC
 from collections.abc import Awaitable, Callable
 from datetime import datetime
-
-#from hashlib import sha256
 from pathlib import Path
 from typing import Any
 
@@ -62,6 +59,7 @@ class Endpoint(ABC):
 
     async def fetch(self, path:str|None = None) -> dict[str,Any]:
         url = f'{self.endpoint}/{path}' if path is not None else self.endpoint
+        data: dict[str,Any] = {}
     
         logger.debug(f'fetch -> {self.endpoint}'+(f'{path}' if path is not None else ''))
         try:
@@ -69,9 +67,8 @@ class Endpoint(ABC):
             data = await fetch_data(url)
         except HTTPStatusError as e:
             logger.warning(e)
-            return {}
+            return data
 
-        assert isinstance(data, dict)
         if "error" in data:
             if isinstance(data['error'], dict):
                 logger.warning(f'{self.endpoint} - {data["error"]["message"]}')
@@ -84,6 +81,7 @@ class Endpoint(ABC):
     async def fetchAll(self, path:str|None = None, params: dict[str,Any]|None = None) -> dict[str,list[dict[str,Any]]]:
         if params is None: params = {}
         url = f'{self.endpoint}/{path}' if path is not None else self.endpoint
+        data: dict[str,Any] = {}
 
         logger.debug(f'fetchAll -> {self.endpoint}'+(f'/{path}' if path is not None else '')+f' | Params: {params!s}')
         try:
@@ -91,9 +89,8 @@ class Endpoint(ABC):
             data = await fetch_data(url, params=params)
         except HTTPStatusError as e:
             logger.warning(e)
-            return {}
+            return data
 
-        assert isinstance(data, dict)
         if "error" in data:
             if isinstance(data['error'], dict):
                 logger.warning(f'{self.endpoint} - {data["error"]["message"]}')
@@ -105,16 +102,24 @@ class Endpoint(ABC):
 
     async def post(self, action: str, body: dict[str,Any]|list[dict[str,Any]]|None = None) -> dict[str,Any]:
         url = f'{self.endpoint}action/{action}'
+        data: dict[str,Any] = {}
 
         params: dict[str,Any] = {}
         if body is not None: params['json'] = body
 
         logger.debug(f"post -> {url} | Params: {params.get('json', {})}")
-        response = await get_client().post(url, **params)
-        data = response.json()
+        try:
+            response = await get_client().post(url, **params)
+            data = response.json()
+        except HTTPStatusError as e:
+            logger.warning(e)
+            return data
     
         if "error" in data:
-            logger.warning(f'{self.endpoint} - {data["error"]["message"]}')
+            if isinstance(data['error'], dict):
+                logger.warning(f'{self.endpoint} - {data["error"]["message"]}')
+            else:
+                logger.warning(f'{self.endpoint} - {data["error"]!s}')
             return {}
 
         if "cooldown" in data['data']:
